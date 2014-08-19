@@ -1,0 +1,12 @@
+%YAML 1.2
+---
+language: python
+python:
+    - 2.6
+    - 2.7
+install:
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -r requirements-2.6.txt; fi
+    - pip install -r requirements.txt
+script: nosetests -c nose.cfg --with-coverage --cover-package=sprockets
+after_success:
+  - coveralls
