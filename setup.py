@@ -1,5 +1,6 @@
 from setuptools import setup
 import os
+import platform
 
 requirements = ['sprockets']
 tests_require = ['coverage', 'coveralls', 'mock', 'nose']
