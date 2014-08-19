@@ -1,15 +1,13 @@
 from setuptools import setup
 import os
-import platform
+import sys
 
 requirements = ['sprockets']
 tests_require = ['coverage', 'coveralls', 'mock', 'nose']
 
 # Requirements for Python 2.6
-(major, minor, rev) = platform.python_version_tuple()
-if float('%s.%s' % (major, minor)) < 2.7:
-    requirements.append('argparse')
-    requirements.append('logutils')
+version = sys.version_info
+if (version.major, version.minor) < (2, 7):
     tests_require.append('unittest2')
 
 
@@ -18,6 +16,7 @@ setup(name='sprockets.http',
       description=('HTTP Server / Web application controller'),
       author='AWeber Communications',
       url='https://github.com/sprockets/sprockets.http',
+      entry_points={'sprockets.controller': ['http=sprockets.http']},
       install_requires=requirements,
       license=open('LICENSE').read(),
       namespace_packages=['sprockets'],
