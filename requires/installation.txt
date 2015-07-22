@@ -1,0 +1,2 @@
+sprockets.logging>=1.2.1,<2
+tornado>=3.1,<5
