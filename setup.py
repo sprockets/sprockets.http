@@ -2,6 +2,9 @@ from setuptools import setup
 import os
 import sys
 
+from sprockets import http
+
+
 requirements = ['sprockets']
 tests_require = ['coverage', 'coveralls', 'mock', 'nose']
 
@@ -12,7 +15,7 @@ if (version.major, version.minor) < (2, 7):
 
 
 setup(name='sprockets.http',
-      version='0.1.0',
+      version=http.__version__,
       description=('HTTP Server / Web application controller'),
       author='AWeber Communications',
       url='https://github.com/sprockets/sprockets.http',
