@@ -1,5 +1,0 @@
-tornado>=4.0
-coverage
-mock
-nose
-python-coveralls
