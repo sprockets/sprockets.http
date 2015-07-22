@@ -1,0 +1,4 @@
+-rtesting.txt
+sphinx>=1.2,<2
+sphinxcontrib-httpdomain>=1.3,<2
+tox>=1.7,<2
