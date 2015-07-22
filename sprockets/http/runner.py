@@ -1,0 +1,158 @@
+"""
+Run a Tornado HTTP service.
+
+- :func:`.run`: calls a ``make_app`` *callable*, configures the
+  environment intelligently, and runs the application.
+- :class:`.Runner`: encapsulates the running of the application
+
+"""
+import logging.config
+import signal
+
+from tornado import httpserver, ioloop
+
+
+class Runner(object):
+    """
+    HTTP service runner.
+
+    :param tornado.web.Application application: the application to serve
+
+    This class implements the logic necessary to safely run a
+    Tornado HTTP service inside of a docker container.
+
+    .. rubric:: Usage Example
+
+    .. code-block:: python
+
+       def make_app():
+           return web.Application(...)
+
+       def run():
+           server = runner.Runner(make_app())
+           server.start_server()
+           ioloop.IOLoop.instance().start()
+
+    The :meth:`.start_server` method sets up the necessary signal handling
+    to ensure that we have a clean shutdown in the face of signals.
+
+    """
+
+    def __init__(self, application):
+        self.application = application
+        self.logger = logging.getLogger('Runner')
+        self.server = None
+        self.shutdown_limit = 5
+
+    def start_server(self, port_number):
+        """
+        Create a HTTP server and start it.
+
+        :param int port_number: the port number to bind the server to
+
+        If the application's ``debug`` setting is ``True``, then we are
+        going to run in a single-process mode; otherwise, we'll let
+        tornado decide how many sub-processes to spawn.
+
+        """
+        signal.signal(signal.SIGTERM, self._on_signal)
+        signal.signal(signal.SIGINT, self._on_signal)
+
+        self.server = httpserver.HTTPServer(self.application)
+        if self.application.settings.get('debug', False):
+            self.logger.info('starting 1 process on port %d', port_number)
+            self.server.listen(port_number)
+        else:
+            self.logger.info('starting processes on port %d', port_number)
+            self.server.bind(port_number)
+            self.server.start(0)
+
+    def run(self, port_number):
+        """
+        Create the server and run the IOLoop.
+
+        :param int port_number: the port number to bind the server to
+
+        If the application's ``debug`` setting is ``True``, then we are
+        going to run in a single-process mode; otherwise, we'll let
+        tornado decide how many sub-processes to spawn.
+
+        """
+        self.start_server(port_number)
+        ioloop.IOLoop.instance().start()
+
+    def _on_signal(self, signo, frame):
+        self.logger.info('signal %s received, stopping', signo)
+        ioloop.IOLoop.instance().add_callback_from_signal(self._shutdown)
+
+    def _shutdown(self):
+        self.server.stop()
+
+        iol = ioloop.IOLoop.instance()
+        deadline = iol.time() + self.shutdown_limit
+
+        def maybe_stop():
+            now = iol.time()
+            if now < deadline and (iol._callbacks or iol._timeouts):
+                return iol.add_timeout(now + 1, maybe_stop)
+            iol.stop()
+            self.logger.info('stopped')
+
+        self.logger.info('stopping within %s seconds', self.shutdown_limit)
+        maybe_stop()
+
+
+def _configure_logging(debug):
+    """
+    Configure the ``logging`` package appropriately.
+
+    :param bool debug: are we running in debug mode?
+
+    """
+    if debug:
+        log_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'incremental': False,
+            'formatters': {
+                'debug': {
+                    'format': ('[%(asctime)s] %(levelname)-8s %(process)-6s '
+                               '%(name)s: %(message)s.')
+                },
+            },
+            'handlers': {
+                'debug-console': {
+                    'class': 'logging.StreamHandler',
+                    'stream': 'ext://sys.stdout',
+                    'level': 'DEBUG',
+                    'formatter': 'debug',
+                },
+            },
+            'root': {
+                'level': 'DEBUG',
+                'handlers': ['debug-console'],
+            }
+        }
+    else:
+        log_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'incremental': False,
+            'formatters': {
+                'json': {
+                    '()': 'sprockets.logging.JSONRequestFormatter',
+                },
+            },
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'json',
+                },
+            },
+            'root': {
+                'level': 'INFO',
+                'handlers': ['console'],
+            }
+        }
+
+    logging.config.dictConfig(log_config)
