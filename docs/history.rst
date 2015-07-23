@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`0.2.2`_ (23 Jul 2015)
+----------------------
+- Fixed requirements management... why is packaging so hard?!
+
 `0.2.1`_ (23 Jul 2015)
 ----------------------
 - Corrected packaging metadata
