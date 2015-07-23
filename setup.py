@@ -17,18 +17,16 @@ def read_requirements(filename):
                 if '#' in line:
                     line = line[:line.index('#')]
                 line = line.strip()
-                if line.startswith('-r'):
-                    line = line[2:].strip()
-                    requirements.extend(read_requirements(filename))
-                else:
-                    requirements.append(line)
+                if line.startswith('-'):
+                    pass
+                requirements.append(line)
     except IOError:
         pass
     return requirements
 
 
-requirements = read_requirements('installation')
-tests_require = read_requirements('testing')
+requirements = read_requirements('installation.txt')
+tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.http',
