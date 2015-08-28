@@ -11,6 +11,8 @@ import signal
 
 from tornado import httpserver, ioloop
 
+import sprockets.logging
+
 
 class Runner(object):
     """
@@ -63,6 +65,8 @@ class Runner(object):
             self.logger.info('starting 1 process on port %d', port_number)
             self.server.listen(port_number)
         else:
+            self.application.settings.setdefault(
+                'log_function', sprockets.logging.tornado_log_function)
             self.logger.info('starting processes on port %d', port_number)
             self.server.bind(port_number)
             self.server.start(0)
