@@ -3,6 +3,11 @@
 Release History
 ===============
 
+`0.3.0`_ (28 Aug 2015)
+----------------------
+- Install :func:`sprockets.logging.tornado_log_function` as the logging
+  function when we are running in release mode
+
 `0.2.2`_ (23 Jul 2015)
 ----------------------
 - Fixed requirements management... why is packaging so hard?!
@@ -17,3 +22,4 @@ Release History
 
 .. _0.2.0: https://github.com/sprockets/sprockets.http/compare/0.0.0...0.2.0
 .. _0.2.1: https://github.com/sprockets/sprockets.http/compare/0.2.0...0.2.1
+.. _0.3.0: https://github.com/sprockets/sprockets.http/compare/0.2.0...0.3.0
