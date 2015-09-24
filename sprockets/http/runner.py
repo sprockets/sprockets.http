@@ -45,12 +45,18 @@ class Runner(object):
         self.logger = logging.getLogger('Runner')
         self.server = None
         self.shutdown_limit = 5
+        try:
+            self.application.runner_callbacks.setdefault('shutdown', [])
+        except AttributeError:
+            setattr(self.application, 'runner_callbacks', {'shutdown': []})
 
-    def start_server(self, port_number):
+    def start_server(self, port_number, number_of_procs=0):
         """
         Create a HTTP server and start it.
 
         :param int port_number: the port number to bind the server to
+        :param int number_of_procs: number of processes to pass to
+            Tornado's ``httpserver.HTTPServer.start``.
 
         If the application's ``debug`` setting is ``True``, then we are
         going to run in a single-process mode; otherwise, we'll let
@@ -69,20 +75,22 @@ class Runner(object):
                 'log_function', sprockets.logging.tornado_log_function)
             self.logger.info('starting processes on port %d', port_number)
             self.server.bind(port_number)
-            self.server.start(0)
+            self.server.start(number_of_procs)
 
-    def run(self, port_number):
+    def run(self, port_number, number_of_procs=0):
         """
         Create the server and run the IOLoop.
 
         :param int port_number: the port number to bind the server to
+        :param int number_of_procs: number of processes to pass to
+            Tornado's ``httpserver.HTTPServer.start``.
 
         If the application's ``debug`` setting is ``True``, then we are
         going to run in a single-process mode; otherwise, we'll let
         tornado decide how many sub-processes to spawn.
 
         """
-        self.start_server(port_number)
+        self.start_server(port_number, number_of_procs)
         ioloop.IOLoop.instance().start()
 
     def _on_signal(self, signo, frame):
@@ -90,8 +98,14 @@ class Runner(object):
         ioloop.IOLoop.instance().add_callback_from_signal(self._shutdown)
 
     def _shutdown(self):
-        self.server.stop()
+        for callback in self.application.runner_callbacks['shutdown']:
+            try:
+                callback(self.application)
+            except Exception:
+                self.logger.warning('shutdown callback %r raised an exception',
+                                    callback, exc_info=1)
 
+        self.server.stop()
         iol = ioloop.IOLoop.instance()
         deadline = iol.time() + self.shutdown_limit
 
