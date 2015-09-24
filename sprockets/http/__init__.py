@@ -36,6 +36,12 @@ def run(create_application, settings=None):
     environment variable determines which port to bind to.  The
     default port is 8000 if nothing overrides it.
 
+    .. rubric:: settings['number_of_procs']
+
+    If the `settings` parameter includes a value for the ``number_of_procs``
+    key, then the application will be configured to run this many processes
+    unless in *debug* mode.  This is passed to ``HTTPServer.start``.
+
     .. rubric:: application.runner_callbacks['shutdown']
 
     The ``runner_callbacks`` attribute is a :class:`dict` of lists
@@ -58,5 +64,7 @@ def run(create_application, settings=None):
     runner._configure_logging(debug_mode)
 
     port_number = int(app_settings.pop('port', os.environ.get('PORT', 8000)))
+    num_procs = int(app_settings.pop('number_of_procs', '0'))
     server = runner.Runner(create_application(**app_settings))
-    server.run(port_number)
+
+    server.run(port_number, num_procs)

@@ -7,6 +7,7 @@ Release History
 ----------------------
 - Run callbacks from ``application.runner_callbacks['shutdown']`` when
   the application is shutting down.
+- Add ``number_of_procs`` parameter to ``sprockets.http``.
 
 `0.3.0`_ (28 Aug 2015)
 ----------------------
