@@ -1,7 +1,7 @@
 import os
 
 
-version_info = (0, 3, 0)
+version_info = (0, 4, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -35,6 +35,18 @@ def run(create_application, settings=None):
     specified port.  If this key is not present, then the :envvar:`PORT`
     environment variable determines which port to bind to.  The
     default port is 8000 if nothing overrides it.
+
+    .. rubric:: application.runner_callbacks['shutdown']
+
+    The ``runner_callbacks`` attribute is a :class:`dict` of lists
+    of functions to call when an event occurs.  The *shutdown* key
+    contains functions that are invoked when a stop signal is
+    received *before* the IOLoop is stopped.
+
+    This attribute will be created **AFTER** `create_application` is
+    called and **BEFORE** this function returns.  If the attribute
+    exists on the instance returned from `create_application` , then
+    it will be used as-is.
 
     """
     from . import runner

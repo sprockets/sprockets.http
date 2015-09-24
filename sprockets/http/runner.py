@@ -45,6 +45,10 @@ class Runner(object):
         self.logger = logging.getLogger('Runner')
         self.server = None
         self.shutdown_limit = 5
+        try:
+            self.application.runner_callbacks.setdefault('shutdown', [])
+        except AttributeError:
+            setattr(self.application, 'runner_callbacks', {'shutdown': []})
 
     def start_server(self, port_number):
         """
@@ -90,8 +94,14 @@ class Runner(object):
         ioloop.IOLoop.instance().add_callback_from_signal(self._shutdown)
 
     def _shutdown(self):
-        self.server.stop()
+        for callback in self.application.runner_callbacks['shutdown']:
+            try:
+                callback(self.application)
+            except Exception:
+                self.logger.warning('shutdown callback %r raised an exception',
+                                    callback, exc_info=1)
 
+        self.server.stop()
         iol = ioloop.IOLoop.instance()
         deadline = iol.time() + self.shutdown_limit
 
