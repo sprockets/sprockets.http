@@ -1,10 +1,12 @@
 API Documentation
 =================
-.. automodule:: sprockets.http
-   :members:
+
+Application Runner
+------------------
+.. autofunction:: sprockets.http.run
 
 Application Callbacks
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 Starting with version 0.4.0, :func:`sprockets.http.run` augments the
 :class:`tornado.web.Application` instance with a new attribute named
 ``runner_callbacks`` which is a dictionary of lists of functions to
@@ -16,6 +18,60 @@ See :func:`sprockets.http.run` for a detailed description of how to
 install the runner callbacks.
 
 Internal Interfaces
--------------------
+~~~~~~~~~~~~~~~~~~~
 .. automodule:: sprockets.http.runner
+   :members:
+
+Response Logging
+----------------
+Version 0.5.0 introduced the :mod:`sprockets.http.mixins` module with
+two simple classes - :class:`~sprockets.http.mixins.LoggingHandler`
+and :class:`~sprockets.http.mixins.ErrorLogger`.  Together they ensure
+that errors emitted from your handlers will be logged in a consistent
+manner.  All too often request handlers simply call ``write_error``
+to report a failure to the caller with code that looks something like:
+
+.. code-block:: python
+
+   class MyHandler(web.RequestHandler):
+
+      def get(self):
+         try:
+            do_something()
+         except Failure:
+            self.send_error(500, reason='Uh oh')
+            return
+
+This makes debugging an application fun since your caller generally
+has more information about the failure than you do :/
+
+By adding :class:`~sprockets.http.mixins.ErrorLogger` into the inheritance
+chain, your error will be emitted to the application log as if you had
+written the following instead:
+
+.. code-block:: python
+
+   class MyHandler(web.RequestHandler):
+      def initialize(self):
+         super(MyHandler, self).initialize()
+         self.logger = logging.getLogger('MyHandler')
+
+      def get(self):
+         try:
+            do_something()
+         except Failure:
+            self.logger.error('%s %s failed with %d: %s',
+                              self.request.method, self.request.uri,
+                              500, 'Uh oh')
+            self.send_error(500, reason='Uh oh')
+            return
+
+It doesn't look like much, but the error reporting is a little more
+interesting than that -- 4XX errors are reported as a warning,
+exceptions will include the stack traces, etc.
+
+.. autoclass:: sprockets.http.mixins.LoggingHandler
+   :members:
+
+.. autoclass:: sprockets.http.mixins.ErrorLogger
    :members:

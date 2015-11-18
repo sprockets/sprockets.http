@@ -3,6 +3,11 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Add ``sprockets.http.mixins.LoggingHandler``
+- Add ``sprockets.http.mixins.ErrorLogger``
+
 `0.4.0`_ (24 Sep 2015)
 ----------------------
 - Run callbacks from ``application.runner_callbacks['shutdown']`` when
@@ -31,3 +36,4 @@ Release History
 .. _0.2.2: https://github.com/sprockets/sprockets.http/compare/0.2.1...0.2.2
 .. _0.3.0: https://github.com/sprockets/sprockets.http/compare/0.2.2...0.3.0
 .. _0.4.0: https://github.com/sprockets/sprockets.http/compare/0.3.0...0.4.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/0.4.0...master
