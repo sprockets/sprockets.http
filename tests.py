@@ -23,16 +23,16 @@ class RaisingHandler(mixins.ErrorLogger, web.RequestHandler):
                             reason=self.get_query_argument('reason', None))
 
 
-class ErrorWriterTests(testing.AsyncHTTPTestCase):
+class ErrorLoggerTests(testing.AsyncHTTPTestCase):
 
     def setUp(self):
-        super(ErrorWriterTests, self).setUp()
+        super(ErrorLoggerTests, self).setUp()
         self.recorder = RecordingHandler()
         root_logger = logging.getLogger()
         root_logger.addHandler(self.recorder)
 
     def tearDown(self):
-        super(ErrorWriterTests, self).tearDown()
+        super(ErrorLoggerTests, self).tearDown()
         logging.getLogger().removeHandler(self.recorder)
 
     def get_app(self):
