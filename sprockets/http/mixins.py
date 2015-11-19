@@ -42,12 +42,19 @@ class ErrorLogger(LoggingHandler, object):
     """
 
     def send_error(self, status_code=500, **kwargs):
-        # Oh, and make non-standard HTTP status codes NOT explode!
         if kwargs.get('reason', None) is None:
-            kwargs['reason'] = httputil.responses.get(status_code, 'Unknown')
+            # so... ReqehstHandler._handle_request_exception explicitly
+            # discards the exc.reason in the case of web.HTTPError...
+            _, exc, _ = kwargs.get('exc_info', (None, None, None))
+            if getattr(exc, 'reason', None):
+                kwargs['reason'] = exc.reason
+            else:
+                # Oh, and make non-standard HTTP status codes NOT explode!
+                kwargs['reason'] = httputil.responses.get(status_code,
+                                                          'Unknown')
         super(ErrorLogger, self).send_error(status_code, **kwargs)
 
-    def write_error(self, status_code=500, **kwargs):
+    def write_error(self, status_code, **kwargs):
         log_function = self.logger.debug
         if 400 <= status_code < 500:
             log_function = self.logger.warning
@@ -55,6 +62,6 @@ class ErrorLogger(LoggingHandler, object):
             log_function = self.logger.error
 
         # N.B. kwargs[reason] is set up by send_error
-        log_function('%s %s failed with %d: %s', self.request.method,
+        log_function('%s %s failed with %s: %s', self.request.method,
                      self.request.uri, status_code, kwargs['reason'])
         super(ErrorLogger, self).write_error(status_code, **kwargs)
