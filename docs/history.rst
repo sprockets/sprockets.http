@@ -7,6 +7,7 @@ Release History
 ---------------
 - Add ``sprockets.http.mixins.LoggingHandler``
 - Add ``sprockets.http.mixins.ErrorLogger``
+- Add ``sprockets.http.mixins.ErrorWriter``
 
 `0.4.0`_ (24 Sep 2015)
 ----------------------

@@ -3,11 +3,17 @@ HTTP related utility mixins.
 
 - :class:`LoggingHandler`: adds ``self.logger``
 - :class:`ErrorLogger`: extends ``send_error`` to log useful information
+- :class:`ErrorWriter`: implements ``send_error`` to write a useful response
 
 """
 import logging
+import json
 
 from tornado import httputil
+
+
+def _get_http_reason(status_code):
+    return httputil.responses.get(status_code, 'Unknown')
 
 
 class LoggingHandler(object):
@@ -50,8 +56,7 @@ class ErrorLogger(LoggingHandler, object):
                 kwargs['reason'] = exc.reason
             else:
                 # Oh, and make non-standard HTTP status codes NOT explode!
-                kwargs['reason'] = httputil.responses.get(status_code,
-                                                          'Unknown')
+                kwargs['reason'] = _get_http_reason(status_code)
         super(ErrorLogger, self).send_error(status_code, **kwargs)
 
     def write_error(self, status_code, **kwargs):
@@ -66,3 +71,45 @@ class ErrorLogger(LoggingHandler, object):
                      self.request.uri, status_code,
                      kwargs.get('log_message', kwargs['reason']))
         super(ErrorLogger, self).write_error(status_code, **kwargs)
+
+
+class ErrorWriter(object):
+    """
+    Write error bodies out consistently.
+
+    Mix this class in to your inheritance chain to include error
+    bodies as a standard JSON document.  The error document has
+    two simple properties:
+
+    **type**
+        This is the type of exception that occurred or ``null``.
+        It is only set when :meth:`.write_error` is invoked with
+        a non-empty ``exc_info`` parameter.  In that case, it is
+        set to the name of the first value in the :class:`tuple`;
+        IOW, ``exc_type.__name__``.
+
+    **message**
+        This is a description of the error.  If exception info is
+        present, then the stringified exception value is used as
+        the message (e.g., ``str(exc_value)``); otherwise, the HTTP
+        ``reason`` will be used.  If a custom ``reason`` is not
+        present, then the standard HTTP reason phrase is used.  In
+        the final case of a non-standard HTTP status code with
+        neither an exception nor a custom reason, the string ``Unknown``
+        will be used.
+
+    """
+
+    def write_error(self, status_code, **kwargs):
+        error_body = {'type': None}
+        exc_type, exc_value, _ = kwargs.get('exc_info', (None, None, None))
+        if exc_type and exc_value:
+            error_body['type'] = exc_type.__name__
+            error_body.setdefault('message', str(exc_value))
+        else:
+            error_body.setdefault('message',
+                                  kwargs.get('reason',
+                                             _get_http_reason(status_code)))
+
+        self.set_header('Content-Type', 'application/json')
+        self.write(json.dumps(error_body).encode('utf-8'))

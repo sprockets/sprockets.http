@@ -12,8 +12,6 @@ This library runs Tornado HTTP server applications intelligently.
   - catches ``SIGINT`` (e.g., ``Ctrl+C``)
   - application run in a single process
 
-Example Usage
--------------
 Running a Tornado application intelligently should be very easy.  Ideally
 your application wrapping code should look something like the following.
 
@@ -108,3 +106,10 @@ It is also nice enough to log 4xx status codes as warnings, 5xx codes as
 errors, and include exception tracebacks if an exception is being handled.
 You can go back to writing ``self.send_error`` and let someone else keep
 track of what happened.
+
+Now that we have useful information in our log files, we should be returning
+something useful as well.  By default, the Tornado provided ``send_error``
+implementation writes a simple HTML file as the response body.  The
+``sprockets.http.mixins.ErrorWriter`` mix-in provides an implementation of
+``write_error`` that is more ammenable to programmatic usage.  In particular,
+it uses a JSON body since that is the *defacto* format these days.

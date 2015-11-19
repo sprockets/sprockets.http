@@ -1,12 +1,11 @@
-import os
-
 from tornado import web
 
 from sprockets.http import mixins, run
 
 
-class StatusHandler(mixins.ErrorLogger, web.RequestHandler):
-    """Example that exercises the status code handling of the ErrorLogger."""
+class StatusHandler(mixins.ErrorLogger, mixins.ErrorWriter,
+                    web.RequestHandler):
+    """Example that exercises the mix-ins in this library."""
 
     def get(self, status_code):
         """

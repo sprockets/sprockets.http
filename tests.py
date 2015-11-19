@@ -1,4 +1,5 @@
 import logging
+import json
 
 from tornado import httputil, testing, web
 
@@ -16,7 +17,8 @@ class RecordingHandler(logging.Handler):
         self.emitted.append((record, self.format(record)))
 
 
-class RaisingHandler(mixins.ErrorLogger, web.RequestHandler):
+class RaisingHandler(mixins.ErrorLogger, mixins.ErrorWriter,
+                     web.RequestHandler):
 
     def get(self, status_code):
         raise web.HTTPError(int(status_code),
@@ -80,3 +82,62 @@ class ErrorLoggerTests(testing.AsyncHTTPTestCase):
         self.fetch('/status/400?log_message=injected%20message')
         self.assert_message_logged(logging.WARNING,
                                    'failed with 400: injected message')
+
+
+class ErrorWriterTests(testing.AsyncHTTPTestCase):
+
+    def get_app(self):
+        return web.Application([
+            web.url(r'/status/(?P<status_code>\d+)', examples.StatusHandler),
+            web.url(r'/fail/(?P<status_code>\d+)', RaisingHandler),
+        ])
+
+    def _decode_response(self, response):
+        content_type = response.headers['Content-Type']
+        self.assertTrue(content_type.startswith('application/json'),
+                        'Incorrect content type received')
+        return json.loads(response.body.decode('utf-8'))
+
+    def test_that_error_json_contains_error_type(self):
+        response = self.fetch('/fail/400')
+        self.assertEqual(response.code, 400)
+
+        exc = web.HTTPError(400)
+        body = self._decode_response(response)
+        self.assertEqual(body['type'], exc.__class__.__name__)
+
+    def test_that_error_json_contains_error_message(self):
+        response = self.fetch('/fail/400')
+        self.assertEqual(response.code, 400)
+
+        exc = web.HTTPError(400)
+        body = self._decode_response(response)
+        self.assertEqual(body['message'], str(exc))
+
+    def test_that_error_json_ignores_the_log_message(self):
+        response = self.fetch('/status/500?log_message=something%20good')
+        self.assertEqual(response.code, 500)
+
+        body = self._decode_response(response)
+        self.assertEqual(body['message'], httputil.responses[500])
+
+    def test_that_error_json_contains_type_none_for_non_exceptions(self):
+        response = self.fetch('/status/500')
+        self.assertEqual(response.code, 500)
+
+        body = self._decode_response(response)
+        self.assertIsNone(body['type'])
+
+    def test_that_error_json_contains_reason_for_non_exceptions(self):
+        response = self.fetch('/status/500')
+        self.assertEqual(response.code, 500)
+
+        body = self._decode_response(response)
+        self.assertEqual(body['message'], httputil.responses[500])
+
+    def test_that_error_json_reason_contains_unknown_in_some_cases(self):
+        response = self.fetch('/status/567')
+        self.assertEqual(response.code, 567)
+
+        body = self._decode_response(response)
+        self.assertEqual(body['message'], 'Unknown')

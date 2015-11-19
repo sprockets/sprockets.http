@@ -75,3 +75,13 @@ exceptions will include the stack traces, etc.
 
 .. autoclass:: sprockets.http.mixins.ErrorLogger
    :members:
+
+Standardized Error Response Documents
+-------------------------------------
+Version 0.5.0 also introduced the :class:`~sprockets.http.mixins.ErrorWriter`
+class which implements ``write_error`` to provide a standard JSON
+document response instead of the default HTML response that Tornado
+implements.
+
+.. autoclass:: sprockets.http.mixins.ErrorWriter
+   :members:
