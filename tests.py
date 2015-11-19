@@ -75,3 +75,8 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
     def test_that_reason_extracted_from_http_errors(self):
         self.fetch('/fail/400?reason=oopsie')
         self.assert_message_logged(logging.WARNING, 'failed with 400: oopsie')
+
+    def test_that_log_message_is_honored(self):
+        self.fetch('/status/400?log_message=injected%20message')
+        self.assert_message_logged(logging.WARNING,
+                                   'failed with 400: injected message')

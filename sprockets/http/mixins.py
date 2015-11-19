@@ -63,5 +63,6 @@ class ErrorLogger(LoggingHandler, object):
 
         # N.B. kwargs[reason] is set up by send_error
         log_function('%s %s failed with %s: %s', self.request.method,
-                     self.request.uri, status_code, kwargs['reason'])
+                     self.request.uri, status_code,
+                     kwargs.get('log_message', kwargs['reason']))
         super(ErrorLogger, self).write_error(status_code, **kwargs)

@@ -18,11 +18,12 @@ class StatusHandler(mixins.ErrorLogger, web.RequestHandler):
         """
         status_code = int(status_code)
         if status_code >= 400:
+            kwargs = {'status_code': status_code}
             if self.get_query_argument('reason', None):
-                self.send_error(status_code=status_code,
-                                reason=self.get_query_argument('reason'))
-            else:
-                self.send_error(status_code=status_code)
+                kwargs['reason'] = self.get_query_argument('reason')
+            if self.get_query_argument('log_message', None):
+                kwargs['log_message'] = self.get_query_argument('log_message')
+            self.send_error(**kwargs)
         else:
             self.set_status(status_code)
 
