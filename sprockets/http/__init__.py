@@ -1,7 +1,7 @@
 import os
 
 
-version_info = (0, 4, 0)
+version_info = (1, 0, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
