@@ -136,9 +136,9 @@ Now that we have useful information in our log files, we should be returning
 something useful as well.  By default, the Tornado provided ``send_error``
 implementation writes a simple HTML file as the response body.  The
 ``sprockets.http.mixins.ErrorWriter`` mix-in provides an implementation of
-``write_error`` that is more ammenable to programmatic usage.  In particular,
-it uses a JSON body since that is the *defacto* format these days.  Let's
-look at our example again:
+``write_error`` that is more amenable to programmatic usage.  By default
+it uses a JSON body since that is the *defacto* format these days. Let's look
+at our example again:
 
 .. code-block:: python
 
@@ -181,3 +181,7 @@ are handled in a manner similar to what Tornado would do -- if the call to
 ``send_error`` includes exception information, then the exception's type
 will be included in the response.  The ``traceback`` is only included when
 the standard ``serve_traceback`` Tornado option is enabled.
+
+If the ``sprockets.mixins.mediatype.ContentMixin`` is also extended by your
+base class, ``write-error`` will use the ``ContentMixin.send_response`` method
+for choosing the appropriate response format and sending the error response.
