@@ -86,11 +86,22 @@ class ErrorLoggerTests(testing.AsyncHTTPTestCase):
 
 class ErrorWriterTests(testing.AsyncHTTPTestCase):
 
+    def setUp(self):
+        self._application = None
+        super(ErrorWriterTests, self).setUp()
+
+    @property
+    def application(self):
+        if self._application is None:
+            self._application = web.Application([
+                web.url(r'/status/(?P<status_code>\d+)',
+                        examples.StatusHandler),
+                web.url(r'/fail/(?P<status_code>\d+)', RaisingHandler),
+            ])
+        return self._application
+
     def get_app(self):
-        return web.Application([
-            web.url(r'/status/(?P<status_code>\d+)', examples.StatusHandler),
-            web.url(r'/fail/(?P<status_code>\d+)', RaisingHandler),
-        ])
+        return self.application
 
     def _decode_response(self, response):
         content_type = response.headers['Content-Type']
@@ -141,3 +152,12 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 
         body = self._decode_response(response)
         self.assertEqual(body['message'], 'Unknown')
+
+    def test_that_error_json_honors_serve_traceback(self):
+        self.application.settings['serve_traceback'] = True
+
+        response = self.fetch('/fail/400')
+        self.assertEqual(response.code, 400)
+
+        body = self._decode_response(response)
+        self.assertGreater(len(body['traceback']), 0)

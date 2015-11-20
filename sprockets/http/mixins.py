@@ -8,6 +8,7 @@ HTTP related utility mixins.
 """
 import logging
 import json
+import traceback
 
 from tornado import httputil
 
@@ -79,7 +80,7 @@ class ErrorWriter(object):
 
     Mix this class in to your inheritance chain to include error
     bodies as a standard JSON document.  The error document has
-    two simple properties:
+    three simple properties:
 
     **type**
         This is the type of exception that occurred or ``null``.
@@ -98,18 +99,27 @@ class ErrorWriter(object):
         neither an exception nor a custom reason, the string ``Unknown``
         will be used.
 
+    **traceback**
+        If the application is configured to serve tracebacks and the
+        error was caused by an exception (based on ``exc_info`` kwarg),
+        then this is the formatted traceback as an array of strings
+        returned from :func:`traceback.format_exception`.  Otherwise,
+        this property is set to ``null``.
+
     """
 
     def write_error(self, status_code, **kwargs):
-        error_body = {'type': None}
+        error_body = {'type': None, 'traceback': None}
         exc_type, exc_value, _ = kwargs.get('exc_info', (None, None, None))
         if exc_type and exc_value:
             error_body['type'] = exc_type.__name__
             error_body.setdefault('message', str(exc_value))
+            if self.settings.get('serve_traceback', False):
+                error_body['traceback'] = traceback.format_exception(
+                    *kwargs['exc_info'])
         else:
-            error_body.setdefault('message',
-                                  kwargs.get('reason',
-                                             _get_http_reason(status_code)))
+            reason = kwargs.get('reason', _get_http_reason(status_code))
+            error_body.setdefault('message', reason)
 
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(error_body).encode('utf-8'))
