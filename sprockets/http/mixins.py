@@ -78,9 +78,14 @@ class ErrorWriter(object):
     """
     Write error bodies out consistently.
 
-    Mix this class in to your inheritance chain to include error
-    bodies as a standard JSON document.  The error document has
-    three simple properties:
+    Mix this class in to your inheritance chain to include error bodies in a
+    machine-readable document format.
+
+    If :class:`~sprockets.mixins.mediatype.ContentMixin` is also in use, it
+    will send the error response with it, otherwise the response is sent as
+    a JSON document.
+
+    The error document has three simple properties:
 
     **type**
         This is the type of exception that occurred or ``null``.
@@ -121,5 +126,9 @@ class ErrorWriter(object):
             reason = kwargs.get('reason', _get_http_reason(status_code))
             error_body.setdefault('message', reason)
 
-        self.set_header('Content-Type', 'application/json')
-        self.write(json.dumps(error_body).encode('utf-8'))
+        # If sprockets.mixins.media_type is being used, use it
+        if hasattr(self, 'send_response'):
+            self.send_response(error_body)
+        else:
+            self.set_header('Content-Type', 'application/json; charset=utf-8')
+            self.write(json.dumps(error_body).encode('utf-8'))

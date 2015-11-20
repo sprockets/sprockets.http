@@ -1,5 +1,6 @@
 import logging
 import json
+import mock
 
 from tornado import httputil, testing, web
 
@@ -161,3 +162,15 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 
         body = self._decode_response(response)
         self.assertGreater(len(body['traceback']), 0)
+
+    def test_that_mediatype_mixin_is_honored(self):
+        send_response = mock.Mock()
+        setattr(examples.StatusHandler, 'send_response', send_response)
+        response = self.fetch('/status/500')
+        self.assertEqual(response.code, 500)
+        send_response.assert_called_once_with({
+            'type': None,
+            'message': 'Internal Server Error',
+            'traceback': None
+        })
+        delattr(examples.StatusHandler, 'send_response')
