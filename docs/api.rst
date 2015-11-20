@@ -79,9 +79,12 @@ exceptions will include the stack traces, etc.
 Standardized Error Response Documents
 -------------------------------------
 Version 0.5.0 also introduced the :class:`~sprockets.http.mixins.ErrorWriter`
-class which implements ``write_error`` to provide a standard JSON
-document response instead of the default HTML response that Tornado
-implements.
+class which implements ``write_error`` to provide a standard machine-readable
+document response instead of the default HTML response that Tornado implements.
+If :class:`~sprockets.mixins.mediatype.ContentMixin` is being used as well,
+``write_error`` will use
+:meth:`~sprockets.mixins.mediatype.ContentMixin.send_response` to send the
+document, otherwise it is sent as JSON.
 
 .. autoclass:: sprockets.http.mixins.ErrorWriter
    :members:

@@ -2,6 +2,9 @@
 
 Release History
 ===============
+`1.0.1`_ (20 Nov 2015)
+----------------------
+- Add support for ``sprockets.mixins.mediatype`` in ``sprockets.http.mixins.ErrorWriter``
 
 `1.0.0`_ (20 Nov 2015)
 ----------------------
