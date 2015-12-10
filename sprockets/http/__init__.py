@@ -1,3 +1,4 @@
+import logging
 import os
 
 
@@ -61,7 +62,7 @@ def run(create_application, settings=None):
     debug_mode = bool(app_settings.get('debug',
                                        int(os.environ.get('DEBUG', 0)) != 0))
     app_settings['debug'] = debug_mode
-    runner._configure_logging(debug_mode)
+    logging.config.dictConfig(runner._get_logging_config(debug_mode))
 
     port_number = int(app_settings.pop('port', os.environ.get('PORT', 8000)))
     num_procs = int(app_settings.pop('number_of_procs', '0'))

@@ -120,15 +120,15 @@ class Runner(object):
         maybe_stop()
 
 
-def _configure_logging(debug):
+def _get_logging_config(debug):
     """
-    Configure the ``logging`` package appropriately.
+    Retrieve dictionary-based logging configuration.
 
     :param bool debug: are we running in debug mode?
 
     """
     if debug:
-        log_config = {
+        return {
             'version': 1,
             'disable_existing_loggers': False,
             'incremental': False,
@@ -152,7 +152,7 @@ def _configure_logging(debug):
             }
         }
     else:
-        log_config = {
+        return {
             'version': 1,
             'disable_existing_loggers': False,
             'incremental': False,
@@ -172,5 +172,3 @@ def _configure_logging(debug):
                 'handlers': ['console'],
             }
         }
-
-    logging.config.dictConfig(log_config)

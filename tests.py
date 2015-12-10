@@ -216,8 +216,11 @@ class RunTests(MockHelper, unittest.TestCase):
     def setUp(self):
         super(RunTests, self).setUp()
         self.runner_cls = self.start_mock('sprockets.http.runner.Runner')
-        self.configure_logging = self.start_mock(
-            'sprockets.http.runner._configure_logging')
+        self.get_logging_config = self.start_mock(
+            'sprockets.http.runner._get_logging_config')
+        self.get_logging_config.return_value = {'version': 1}
+        self.logging_dict_config = self.start_mock(
+            'sprockets.http.logging.config').dictConfig
 
     @property
     def runner_instance(self):
@@ -234,21 +237,21 @@ class RunTests(MockHelper, unittest.TestCase):
         with override_environment_variable('DEBUG', '1'):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=True)
-            self.configure_logging.assert_called_once_with(True)
+            self.get_logging_config.assert_called_once_with(True)
 
     def test_that_false_debug_envvar_disables_debug_flag(self):
         create_app = mock.Mock()
         with override_environment_variable('DEBUG', '0'):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=False)
-            self.configure_logging.assert_called_once_with(False)
+            self.get_logging_config.assert_called_once_with(False)
 
     def test_that_unset_debug_envvar_disables_debug_flag(self):
         create_app = mock.Mock()
         with override_environment_variable('DEBUG', None):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=False)
-            self.configure_logging.assert_called_once_with(False)
+            self.get_logging_config.assert_called_once_with(False)
 
     def test_that_port_defaults_to_8000(self):
         sprockets.http.run(mock.Mock())
@@ -261,12 +264,17 @@ class RunTests(MockHelper, unittest.TestCase):
 
     def test_that_port_kwarg_sets_port_number(self):
         sprockets.http.run(mock.Mock(), settings={'port': 8888})
-        self.runner_instance.run.called_once_with(8888, mock.ANY)
+        self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
     def test_that_number_of_procs_defaults_to_zero(self):
         sprockets.http.run(mock.Mock())
-        self.runner_instance.run.called_once_with(mock.ANY, 0)
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 0)
 
     def test_that_number_of_process_kwarg_sets_number_of_procs(self):
         sprockets.http.run(mock.Mock(), settings={'number_of_procs': 1})
-        self.runner_instance.run.called_once_with(mock.ANY, 1)
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 1)
+
+    def test_that_logging_dict_config_is_called_appropriately(self):
+        sprockets.http.run(mock.Mock())
+        self.logging_dict_config.assert_called_once_with(
+            self.get_logging_config.return_value)
