@@ -6,7 +6,7 @@ Run a Tornado HTTP service.
 - :class:`.Runner`: encapsulates the running of the application
 
 """
-import logging.config
+import logging
 import signal
 
 from tornado import httpserver, ioloop
@@ -118,57 +118,3 @@ class Runner(object):
 
         self.logger.info('stopping within %s seconds', self.shutdown_limit)
         maybe_stop()
-
-
-def _get_logging_config(debug):
-    """
-    Retrieve dictionary-based logging configuration.
-
-    :param bool debug: are we running in debug mode?
-
-    """
-    if debug:
-        return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'incremental': False,
-            'formatters': {
-                'debug': {
-                    'format': ('[%(asctime)s] %(levelname)-8s %(process)-6s '
-                               '%(name)s: %(message)s.')
-                },
-            },
-            'handlers': {
-                'debug-console': {
-                    'class': 'logging.StreamHandler',
-                    'stream': 'ext://sys.stdout',
-                    'level': 'DEBUG',
-                    'formatter': 'debug',
-                },
-            },
-            'root': {
-                'level': 'DEBUG',
-                'handlers': ['debug-console'],
-            }
-        }
-    else:
-        return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'incremental': False,
-            'formatters': {
-                'json': {
-                    '()': 'sprockets.logging.JSONRequestFormatter',
-                },
-            },
-            'handlers': {
-                'console': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'json',
-                },
-            },
-            'root': {
-                'level': 'INFO',
-                'handlers': ['console'],
-            }
-        }

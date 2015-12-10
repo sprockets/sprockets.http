@@ -217,7 +217,7 @@ class RunTests(MockHelper, unittest.TestCase):
         super(RunTests, self).setUp()
         self.runner_cls = self.start_mock('sprockets.http.runner.Runner')
         self.get_logging_config = self.start_mock(
-            'sprockets.http.runner._get_logging_config')
+            'sprockets.http._get_logging_config')
         self.get_logging_config.return_value = {'version': 1}
         self.logging_dict_config = self.start_mock(
             'sprockets.http.logging.config').dictConfig
