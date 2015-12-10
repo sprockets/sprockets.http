@@ -278,3 +278,8 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(mock.Mock())
         self.logging_dict_config.assert_called_once_with(
             self.get_logging_config.return_value)
+
+    def test_that_logconfig_override_is_used(self):
+        sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
+        self.logging_dict_config.assert_called_once_with(
+            mock.sentinel.config)

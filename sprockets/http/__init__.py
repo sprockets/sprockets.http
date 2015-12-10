@@ -2,11 +2,11 @@ import logging
 import os
 
 
-version_info = (1, 0, 1)
+version_info = (1, 0, 2)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
-def run(create_application, settings=None):
+def run(create_application, settings=None, log_config=None):
     """
     Run a Tornado create_application.
 
@@ -15,6 +15,11 @@ def run(create_application, settings=None):
     :param dict|None settings: optional configuration dictionary
         that will be passed through to ``create_application``
         as kwargs.
+    :param dict|None log_config: optional logging configuration
+        dictionary to use.  By default, a reasonable logging
+        configuration is generated based on settings.  If you
+        need to override the configuration, then use this parameter.
+        It is passed as-is to :func:`logging.config.dictConfig`.
 
     .. rubric:: settings['debug']
 
@@ -62,7 +67,8 @@ def run(create_application, settings=None):
     debug_mode = bool(app_settings.get('debug',
                                        int(os.environ.get('DEBUG', 0)) != 0))
     app_settings['debug'] = debug_mode
-    logging.config.dictConfig(_get_logging_config(debug_mode))
+    logging.config.dictConfig(_get_logging_config(debug_mode)
+                              if log_config is None else log_config)
 
     port_number = int(app_settings.pop('port', os.environ.get('PORT', 8000)))
     num_procs = int(app_settings.pop('number_of_procs', '0'))
