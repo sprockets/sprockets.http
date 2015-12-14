@@ -1,10 +1,13 @@
+import contextlib
 import logging
+import os
 import json
-import mock
+import unittest
 
 from tornado import httputil, testing, web
+import mock
 
-from sprockets.http import mixins
+import sprockets.http.mixins
 import examples
 
 
@@ -18,12 +21,44 @@ class RecordingHandler(logging.Handler):
         self.emitted.append((record, self.format(record)))
 
 
-class RaisingHandler(mixins.ErrorLogger, mixins.ErrorWriter,
+class RaisingHandler(sprockets.http.mixins.ErrorLogger,
+                     sprockets.http.mixins.ErrorWriter,
                      web.RequestHandler):
 
     def get(self, status_code):
         raise web.HTTPError(int(status_code),
                             reason=self.get_query_argument('reason', None))
+
+
+class MockHelper(unittest.TestCase):
+
+    def setUp(self):
+        super(MockHelper, self).setUp()
+        self._mocks = []
+
+    def tearDown(self):
+        super(MockHelper, self).tearDown()
+        for mocker in self._mocks:
+            mocker.stop()
+        del self._mocks[:]
+
+    def start_mock(self, target):
+        mocked = mock.patch(target)
+        self._mocks.append(mocked)
+        return mocked.start()
+
+
+@contextlib.contextmanager
+def override_environment_variable(name, value):
+    stash = os.environ.pop(name, None)
+    if value is not None:
+        os.environ[name] = value
+    try:
+        yield
+    finally:
+        os.environ.pop(name, None)
+        if stash is not None:
+            os.environ[name] = stash
 
 
 class ErrorLoggerTests(testing.AsyncHTTPTestCase):
@@ -174,3 +209,77 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
             'traceback': None
         })
         delattr(examples.StatusHandler, 'send_response')
+
+
+class RunTests(MockHelper, unittest.TestCase):
+
+    def setUp(self):
+        super(RunTests, self).setUp()
+        self.runner_cls = self.start_mock('sprockets.http.runner.Runner')
+        self.get_logging_config = self.start_mock(
+            'sprockets.http._get_logging_config')
+        self.get_logging_config.return_value = {'version': 1}
+        self.logging_dict_config = self.start_mock(
+            'sprockets.http.logging.config').dictConfig
+
+    @property
+    def runner_instance(self):
+        return self.runner_cls.return_value
+
+    def test_that_runner_run_called_with_created_application(self):
+        create_app = mock.Mock()
+        sprockets.http.run(create_app)
+        self.assertEqual(create_app.call_count, 1)
+        self.runner_cls.assert_called_once_with(create_app.return_value)
+
+    def test_that_debug_envvar_enables_debug_flag(self):
+        create_app = mock.Mock()
+        with override_environment_variable('DEBUG', '1'):
+            sprockets.http.run(create_app)
+            create_app.assert_called_once_with(debug=True)
+            self.get_logging_config.assert_called_once_with(True)
+
+    def test_that_false_debug_envvar_disables_debug_flag(self):
+        create_app = mock.Mock()
+        with override_environment_variable('DEBUG', '0'):
+            sprockets.http.run(create_app)
+            create_app.assert_called_once_with(debug=False)
+            self.get_logging_config.assert_called_once_with(False)
+
+    def test_that_unset_debug_envvar_disables_debug_flag(self):
+        create_app = mock.Mock()
+        with override_environment_variable('DEBUG', None):
+            sprockets.http.run(create_app)
+            create_app.assert_called_once_with(debug=False)
+            self.get_logging_config.assert_called_once_with(False)
+
+    def test_that_port_defaults_to_8000(self):
+        sprockets.http.run(mock.Mock())
+        self.runner_instance.run.called_once_with(8000, mock.ANY)
+
+    def test_that_port_envvar_sets_port_number(self):
+        with override_environment_variable('PORT', '8888'):
+            sprockets.http.run(mock.Mock())
+            self.runner_instance.run.called_once_with(8888, mock.ANY)
+
+    def test_that_port_kwarg_sets_port_number(self):
+        sprockets.http.run(mock.Mock(), settings={'port': 8888})
+        self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
+
+    def test_that_number_of_procs_defaults_to_zero(self):
+        sprockets.http.run(mock.Mock())
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 0)
+
+    def test_that_number_of_process_kwarg_sets_number_of_procs(self):
+        sprockets.http.run(mock.Mock(), settings={'number_of_procs': 1})
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 1)
+
+    def test_that_logging_dict_config_is_called_appropriately(self):
+        sprockets.http.run(mock.Mock())
+        self.logging_dict_config.assert_called_once_with(
+            self.get_logging_config.return_value)
+
+    def test_that_logconfig_override_is_used(self):
+        sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
+        self.logging_dict_config.assert_called_once_with(
+            mock.sentinel.config)

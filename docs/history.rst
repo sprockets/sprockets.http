@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.0.2`_ (10 Dec 2015)
+----------------------
+- Add ``log_config`` parameter to ``sprockets.http.run``
+
 `1.0.1`_ (20 Nov 2015)
 ----------------------
 - Add support for ``sprockets.mixins.mediatype`` in ``sprockets.http.mixins.ErrorWriter``
@@ -43,4 +47,5 @@ Release History
 .. _0.4.0: https://github.com/sprockets/sprockets.http/compare/0.3.0...0.4.0
 .. _1.0.0: https://github.com/sprockets/sprockets.http/compare/0.4.0...1.0.0
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.0.1...master
+.. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.0.2...master
