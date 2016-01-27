@@ -32,6 +32,7 @@ html_theme_options = {
     'description': 'Tornado application runner',
     'github_banner': True,
     'travis_button': True,
+    'codecov_button': True,
 }
 
 intersphinx_mapping = {
