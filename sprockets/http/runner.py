@@ -47,8 +47,12 @@ class Runner(object):
         self.shutdown_limit = 5
         try:
             self.application.runner_callbacks.setdefault('shutdown', [])
+            self.application.runner_callbacks.setdefault('before_run', [])
         except AttributeError:
-            setattr(self.application, 'runner_callbacks', {'shutdown': []})
+            setattr(self.application, 'runner_callbacks', {
+                'shutdown': [],
+                'before_run': [],
+            })
 
     def start_server(self, port_number, number_of_procs=0):
         """
@@ -90,8 +94,18 @@ class Runner(object):
         tornado decide how many sub-processes to spawn.
 
         """
+        iol = ioloop.IOLoop.instance()
         self.start_server(port_number, number_of_procs)
-        ioloop.IOLoop.instance().start()
+        for callback in self.application.runner_callbacks['before_run']:
+            try:
+                callback(self.application, iol)
+            except Exception:
+                self.logger.error('before_run callback %r cancelled start',
+                                  callback, exc_info=1)
+                self._shutdown()
+                return
+
+        iol.start()
 
     def _on_signal(self, signo, frame):
         self.logger.info('signal %s received, stopping', signo)

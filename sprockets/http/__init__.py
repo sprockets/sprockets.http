@@ -48,17 +48,20 @@ def run(create_application, settings=None, log_config=None):
     key, then the application will be configured to run this many processes
     unless in *debug* mode.  This is passed to ``HTTPServer.start``.
 
-    .. rubric:: application.runner_callbacks['shutdown']
+    .. rubric:: application.runner_callbacks
 
     The ``runner_callbacks`` attribute is a :class:`dict` of lists
-    of functions to call when an event occurs.  The *shutdown* key
-    contains functions that are invoked when a stop signal is
-    received *before* the IOLoop is stopped.
+    of functions to call when an event occurs.  This attribute will be
+    created **AFTER** `create_application` is called and **BEFORE** this
+    function returns.  If the attribute exists on the instance returned
+    from `create_application` , then it will be used as-is.
 
-    This attribute will be created **AFTER** `create_application` is
-    called and **BEFORE** this function returns.  If the attribute
-    exists on the instance returned from `create_application` , then
-    it will be used as-is.
+    The *before_run* key contains functions that are invoked after
+    sub-processes are forked (if necessary) and before the IOLoop is
+    started.
+
+    The *shutdown* key contains functions that are invoked when a stop
+    signal is received *before* the IOLoop is stopped.
 
     """
     from . import runner

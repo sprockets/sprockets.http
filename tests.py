@@ -293,10 +293,12 @@ class CallbackTests(unittest.TestCase):
         super(CallbackTests, self).setUp()
         self.application = mock.Mock()
         self.shutdown_callback = mock.Mock()
+        self.before_run_callback = mock.Mock()
 
     def make_application(self, **settings):
         self.application.settings = settings.copy()
         self.application.runner_callbacks = {
+            'before_run': [self.before_run_callback],
             'shutdown': [self.shutdown_callback],
         }
         return self.application
@@ -311,3 +313,14 @@ class CallbackTests(unittest.TestCase):
                 runner.run(8080)
                 runner._shutdown()
         self.shutdown_callback.assert_called_once_with(self.application)
+
+    def test_that_before_run_callback_invoked(self):
+        iol = mock.Mock(_callbacks=[], _timeouts=[])
+        iol.time.side_effect = time.time
+        with mock.patch('sprockets.http.runner.ioloop') as ioloop:
+            ioloop.IOLoop.instance.return_value = iol
+            with mock.patch('sprockets.http.runner.httpserver'):
+                runner = sprockets.http.runner.Runner(self.make_application())
+                runner.run(8080)
+        self.before_run_callback.assert_called_once_with(
+            self.application, iol)

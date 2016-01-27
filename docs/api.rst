@@ -10,9 +10,22 @@ Application Callbacks
 Starting with version 0.4.0, :func:`sprockets.http.run` augments the
 :class:`tornado.web.Application` instance with a new attribute named
 ``runner_callbacks`` which is a dictionary of lists of functions to
-call when specific events occur.  The only supported event is
-**shutdown**.  When the application receives a stop signal, it will
-run each of the callbacks before terminating the application instance.
+call when specific events occur.  The following events are supported:
+
+:before_run:
+   This set of callbacks is invoked after Tornado forks sub-processes
+   (based on the ``number_of_procs`` setting) and before
+   :meth:`~tornado.ioloop.IOLoop.start` is called.  Callbacks can
+   safely access the :class:`~tornado.ioloop.IOLoop` without causing
+   the :meth:`~tornado.ioloop.IOLoop.start` method to explode.
+
+   If any callback raises an exception, then the application is
+   terminated **before** the IOLoop is started.
+
+:shutdown:
+   When the application receives a stop signal, it will run each of the
+   callbacks before terminating the application instance.  Exceptions
+   raised by the callbacks are simply logged.
 
 See :func:`sprockets.http.run` for a detailed description of how to
 install the runner callbacks.
