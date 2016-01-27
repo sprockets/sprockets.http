@@ -2,12 +2,14 @@ import contextlib
 import logging
 import os
 import json
+import time
 import unittest
 
 from tornado import httputil, testing, web
 import mock
 
 import sprockets.http.mixins
+import sprockets.http.runner
 import examples
 
 
@@ -283,3 +285,29 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
         self.logging_dict_config.assert_called_once_with(
             mock.sentinel.config)
+
+
+class CallbackTests(unittest.TestCase):
+
+    def setUp(self):
+        super(CallbackTests, self).setUp()
+        self.application = mock.Mock()
+        self.shutdown_callback = mock.Mock()
+
+    def make_application(self, **settings):
+        self.application.settings = settings.copy()
+        self.application.runner_callbacks = {
+            'shutdown': [self.shutdown_callback],
+        }
+        return self.application
+
+    def test_that_shutdown_callback_invoked(self):
+        with mock.patch('sprockets.http.runner.ioloop') as ioloop:
+            iol = mock.Mock(_callbacks=[], _timeouts=[])
+            iol.time.side_effect = time.time
+            ioloop.IOLoop.instance.return_value = iol
+            with mock.patch('sprockets.http.runner.httpserver'):
+                runner = sprockets.http.runner.Runner(self.make_application())
+                runner.run(8080)
+                runner._shutdown()
+        self.shutdown_callback.assert_called_once_with(self.application)
