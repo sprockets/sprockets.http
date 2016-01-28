@@ -287,40 +287,38 @@ class RunTests(MockHelper, unittest.TestCase):
             mock.sentinel.config)
 
 
-class CallbackTests(unittest.TestCase):
+class CallbackTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
         super(CallbackTests, self).setUp()
-        self.application = mock.Mock()
         self.shutdown_callback = mock.Mock()
         self.before_run_callback = mock.Mock()
+        self.application = self.make_application()
+
+        self.io_loop = mock.Mock(_callbacks=[], _timeouts=[])
+        self.io_loop.time.side_effect = time.time
+        ioloop_module = self.start_mock('sprockets.http.runner.ioloop')
+        ioloop_module.IOLoop.instance.return_value = self.io_loop
+
+        self.start_mock('sprockets.http.runner.httpserver')
 
     def make_application(self, **settings):
-        self.application.settings = settings.copy()
-        self.application.runner_callbacks = {
+        application = mock.Mock()
+        application.settings = settings.copy()
+        application.runner_callbacks = {
             'before_run': [self.before_run_callback],
             'shutdown': [self.shutdown_callback],
         }
-        return self.application
+        return application
 
     def test_that_shutdown_callback_invoked(self):
-        with mock.patch('sprockets.http.runner.ioloop') as ioloop:
-            iol = mock.Mock(_callbacks=[], _timeouts=[])
-            iol.time.side_effect = time.time
-            ioloop.IOLoop.instance.return_value = iol
-            with mock.patch('sprockets.http.runner.httpserver'):
-                runner = sprockets.http.runner.Runner(self.make_application())
-                runner.run(8080)
-                runner._shutdown()
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        runner._shutdown()
         self.shutdown_callback.assert_called_once_with(self.application)
 
     def test_that_before_run_callback_invoked(self):
-        iol = mock.Mock(_callbacks=[], _timeouts=[])
-        iol.time.side_effect = time.time
-        with mock.patch('sprockets.http.runner.ioloop') as ioloop:
-            ioloop.IOLoop.instance.return_value = iol
-            with mock.patch('sprockets.http.runner.httpserver'):
-                runner = sprockets.http.runner.Runner(self.make_application())
-                runner.run(8080)
-        self.before_run_callback.assert_called_once_with(
-            self.application, iol)
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        self.before_run_callback.assert_called_once_with(self.application,
+                                                         self.io_loop)
