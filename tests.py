@@ -317,8 +317,33 @@ class CallbackTests(MockHelper, unittest.TestCase):
         runner._shutdown()
         self.shutdown_callback.assert_called_once_with(self.application)
 
+    def test_that_exceptions_from_shutdown_callbacks_are_ignored(self):
+        another_callback = mock.Mock()
+        self.application.runner_callbacks['shutdown'].append(another_callback)
+        self.shutdown_callback.side_effect = Exception
+
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        runner._shutdown()
+        self.shutdown_callback.assert_called_once_with(self.application)
+        another_callback.assert_called_once_with(self.application)
+
     def test_that_before_run_callback_invoked(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8080)
         self.before_run_callback.assert_called_once_with(self.application,
                                                          self.io_loop)
+
+    def test_that_exceptions_from_before_run_callbacks_are_terminal(self):
+        another_callback = mock.Mock()
+        self.application.runner_callbacks['before_run'].append(
+            another_callback)
+        self.before_run_callback.side_effect = Exception
+
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+
+        self.before_run_callback.assert_called_once_with(self.application,
+                                                         self.io_loop)
+        another_callback.assert_not_called()
+        self.shutdown_callback.assert_called_once_with(self.application)
