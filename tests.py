@@ -340,10 +340,16 @@ class CallbackTests(MockHelper, unittest.TestCase):
             another_callback)
         self.before_run_callback.side_effect = Exception
 
-        runner = sprockets.http.runner.Runner(self.application)
-        runner.run(8080)
+        sys_exit = mock.Mock()
+        sys_exit.side_effect = SystemExit
+        with mock.patch('sprockets.http.runner.sys') as sys_module:
+            sys_module.exit = sys_exit
+            with self.assertRaises(SystemExit):
+                runner = sprockets.http.runner.Runner(self.application)
+                runner.run(8080)
 
         self.before_run_callback.assert_called_once_with(self.application,
                                                          self.io_loop)
         another_callback.assert_not_called()
         self.shutdown_callback.assert_called_once_with(self.application)
+        sys_exit.assert_called_once_with(70)

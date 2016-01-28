@@ -8,6 +8,7 @@ Run a Tornado HTTP service.
 """
 import logging
 import signal
+import sys
 
 from tornado import httpserver, ioloop
 
@@ -91,7 +92,10 @@ class Runner(object):
 
         If the application's ``debug`` setting is ``True``, then we are
         going to run in a single-process mode; otherwise, we'll let
-        tornado decide how many sub-processes to spawn.
+        tornado decide how many sub-processes to spawn.  In any case, the
+        applications *before_run* callbacks are invoked.  If a callback
+        raises an exception, then the application is terminated by calling
+        :func:`sys.exit`.
 
         """
         iol = ioloop.IOLoop.instance()
@@ -103,7 +107,7 @@ class Runner(object):
                 self.logger.error('before_run callback %r cancelled start',
                                   callback, exc_info=1)
                 self._shutdown()
-                return
+                sys.exit(70)
 
         iol.start()
 
