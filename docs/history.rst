@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Add support for the ``before_run`` callback set.
+
 `1.0.2`_ (10 Dec 2015)
 ----------------------
 - Add ``log_config`` parameter to ``sprockets.http.run``

@@ -2,12 +2,14 @@ import contextlib
 import logging
 import os
 import json
+import time
 import unittest
 
 from tornado import httputil, testing, web
 import mock
 
 import sprockets.http.mixins
+import sprockets.http.runner
 import examples
 
 
@@ -283,3 +285,168 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
         self.logging_dict_config.assert_called_once_with(
             mock.sentinel.config)
+
+
+class CallbackTests(MockHelper, unittest.TestCase):
+
+    def setUp(self):
+        super(CallbackTests, self).setUp()
+        self.shutdown_callback = mock.Mock()
+        self.before_run_callback = mock.Mock()
+        self.application = self.make_application()
+
+        self.io_loop = mock.Mock(_callbacks=[], _timeouts=[])
+        self.io_loop.time.side_effect = time.time
+        ioloop_module = self.start_mock('sprockets.http.runner.ioloop')
+        ioloop_module.IOLoop.instance.return_value = self.io_loop
+
+        self.start_mock('sprockets.http.runner.httpserver')
+
+    def make_application(self, **settings):
+        application = mock.Mock()
+        application.settings = settings.copy()
+        application.runner_callbacks = {
+            'before_run': [self.before_run_callback],
+            'shutdown': [self.shutdown_callback],
+        }
+        return application
+
+    def test_that_shutdown_callback_invoked(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        runner._shutdown()
+        self.shutdown_callback.assert_called_once_with(self.application)
+
+    def test_that_exceptions_from_shutdown_callbacks_are_ignored(self):
+        another_callback = mock.Mock()
+        self.application.runner_callbacks['shutdown'].append(another_callback)
+        self.shutdown_callback.side_effect = Exception
+
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        runner._shutdown()
+        self.shutdown_callback.assert_called_once_with(self.application)
+        another_callback.assert_called_once_with(self.application)
+
+    def test_that_before_run_callback_invoked(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8080)
+        self.before_run_callback.assert_called_once_with(self.application,
+                                                         self.io_loop)
+
+    def test_that_exceptions_from_before_run_callbacks_are_terminal(self):
+        another_callback = mock.Mock()
+        self.application.runner_callbacks['before_run'].append(
+            another_callback)
+        self.before_run_callback.side_effect = Exception
+
+        sys_exit = mock.Mock()
+        sys_exit.side_effect = SystemExit
+        with mock.patch('sprockets.http.runner.sys') as sys_module:
+            sys_module.exit = sys_exit
+            with self.assertRaises(SystemExit):
+                runner = sprockets.http.runner.Runner(self.application)
+                runner.run(8080)
+
+        self.before_run_callback.assert_called_once_with(self.application,
+                                                         self.io_loop)
+        another_callback.assert_not_called()
+        self.shutdown_callback.assert_called_once_with(self.application)
+        sys_exit.assert_called_once_with(70)
+
+
+class RunnerTests(MockHelper, unittest.TestCase):
+
+    def setUp(self):
+        super(RunnerTests, self).setUp()
+        self.application = mock.Mock()
+        self.application.settings = {}
+        self.application.runner_callbacks = {}
+
+        self.io_loop = mock.Mock()
+        self.io_loop._callbacks = []
+        self.io_loop._timeouts = []
+        self.io_loop.time = time.time
+        ioloop_module = self.start_mock('sprockets.http.runner.ioloop')
+        ioloop_module.IOLoop.instance.return_value = self.io_loop
+
+        self.http_server = mock.Mock()
+        httpserver_module = self.start_mock('sprockets.http.runner.httpserver')
+        httpserver_module.HTTPServer.return_value = self.http_server
+
+    def test_that_run_starts_ioloop(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        self.io_loop.start.assert_called_once_with()
+
+    def test_that_production_run_starts_in_multiprocess_mode(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        self.http_server.bind.assert_called_once_with(8000)
+        self.http_server.start.assert_called_once_with(0)
+
+    def test_that_debug_run_starts_in_singleprocess_mode(self):
+        self.application.settings['debug'] = True
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        self.http_server.listen.assert_called_once_with(8000)
+        self.http_server.start.assert_not_called()
+
+    def test_that_initializer_creates_runner_callbacks_dict(self):
+        application = web.Application()
+        _ = sprockets.http.runner.Runner(application)
+        self.assertEqual(application.runner_callbacks['before_run'], [])
+        self.assertEqual(application.runner_callbacks['shutdown'], [])
+
+    def test_that_signal_handler_invokes_shutdown(self):
+        with mock.patch('sprockets.http.runner.signal') as signal_module:
+            runner = sprockets.http.runner.Runner(self.application)
+            runner.run(8000)
+
+            signal_module.signal.assert_any_call(signal_module.SIGINT,
+                                                 runner._on_signal)
+            signal_module.signal.assert_any_call(signal_module.SIGTERM,
+                                                 runner._on_signal)
+            runner._on_signal(signal_module.SIGINT, mock.Mock())
+            self.io_loop.add_callback_from_signal.assert_called_once_with(
+                runner._shutdown)
+
+    def test_that_shutdown_waits_for_callbacks(self):
+        def add_timeout(_, callback):
+            self.io_loop._callbacks.pop()
+            callback()
+        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
+
+        self.io_loop._callbacks = [mock.Mock(), mock.Mock()]
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        runner._shutdown()
+        self.io_loop.stop.assert_called_once_with()
+        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
+
+    def test_that_shutdown_waits_for_timeouts(self):
+        def add_timeout(_, callback):
+            self.io_loop._timeouts.pop()
+            callback()
+        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
+
+        self.io_loop._timeouts = [mock.Mock(), mock.Mock()]
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        runner._shutdown()
+        self.io_loop.stop.assert_called_once_with()
+        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
+
+    def test_that_shutdown_stops_after_timelimit(self):
+        def add_timeout(_, callback):
+            time.sleep(0.05)
+            callback()
+        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
+
+        self.io_loop._timeouts = [mock.Mock()]
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.shutdown_limit = 0.25
+        runner.run(8000)
+        runner._shutdown()
+        self.io_loop.stop.assert_called_once_with()
+        self.assertNotEqual(self.io_loop._timeouts, [])
