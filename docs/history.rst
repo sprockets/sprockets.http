@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`1.1.0`_ (11 Feb 2016)
+----------------------
 - Add support for the ``before_run`` callback set.
 
 `1.0.2`_ (10 Dec 2015)

@@ -2,7 +2,7 @@ import logging
 import os
 
 
-version_info = (1, 0, 2)
+version_info = (1, 1, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
