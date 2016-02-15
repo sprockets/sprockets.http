@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.1.1`_ (15 Feb 2016)
+----------------------
+- Delay grabbing the ``IOLoop`` instance until after fork.
+
 `1.1.0`_ (11 Feb 2016)
 ----------------------
 - Add support for the ``before_run`` callback set.

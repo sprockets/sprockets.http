@@ -98,8 +98,8 @@ class Runner(object):
         :func:`sys.exit`.
 
         """
-        iol = ioloop.IOLoop.instance()
         self.start_server(port_number, number_of_procs)
+        iol = ioloop.IOLoop.instance()
         for callback in self.application.runner_callbacks['before_run']:
             try:
                 callback(self.application, iol)
