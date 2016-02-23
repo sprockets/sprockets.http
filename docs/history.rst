@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.1.2`_ (23 Feb 2016)
+----------------------
+- Allow xheaders to be set in the application.settings.
+
 `1.1.1`_ (15 Feb 2016)
 ----------------------
 - Delay grabbing the ``IOLoop`` instance until after fork.

@@ -48,6 +48,15 @@ def run(create_application, settings=None, log_config=None):
     key, then the application will be configured to run this many processes
     unless in *debug* mode.  This is passed to ``HTTPServer.start``.
 
+    .. rubric:: settings['xheaders']
+
+    If the `settings` parameter includes a value for the ``xheaders``
+    key, then the application will be configured to use headers, like
+    X-Real-IP, to get the user's IP address instead of attributing all
+    traffic to the load balancer's IP address. When running behind a load
+    balancer like nginx, it is recommended to pass xheaders=True. The default
+    value is False if nothing overrides it.
+
     .. rubric:: application.runner_callbacks
 
     The ``runner_callbacks`` attribute is a :class:`dict` of lists
