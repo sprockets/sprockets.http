@@ -5,7 +5,7 @@ import json
 import time
 import unittest
 
-from tornado import httputil, testing, web
+from tornado import concurrent, httputil, ioloop, testing, web
 import mock
 
 import sprockets.http.mixins
@@ -396,6 +396,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         application = web.Application()
         _ = sprockets.http.runner.Runner(application)
         self.assertEqual(application.runner_callbacks['before_run'], [])
+        self.assertEqual(application.runner_callbacks['on_start'], [])
         self.assertEqual(application.runner_callbacks['shutdown'], [])
 
     def test_that_signal_handler_invokes_shutdown(self):
@@ -450,3 +451,45 @@ class RunnerTests(MockHelper, unittest.TestCase):
         runner._shutdown()
         self.io_loop.stop.assert_called_once_with()
         self.assertNotEqual(self.io_loop._timeouts, [])
+
+
+class AsyncRunTests(unittest.TestCase):
+
+    def test_that_on_start_callbacks_are_invoked(self):
+        future = concurrent.Future()
+
+        def on_started(*args, **kwargs):
+            with mock.patch('sprockets.http.runner.Runner.stop_server'):
+                runner._shutdown()
+                future.set_result(True)
+
+        application = web.Application()
+        with mock.patch('sprockets.http.runner.Runner.start_server'):
+            runner = sprockets.http.runner.Runner(application,
+                                                  on_start=[on_started])
+            runner.run(8000)
+        self.assertTrue(future.result())
+
+
+    def test_that_shutdown_futures_are_waited_on(self):
+        future = concurrent.Future()
+
+        def on_started(*args, **kwargs):
+            with mock.patch('sprockets.http.runner.Runner.stop_server'):
+                runner._shutdown()
+
+        def on_shutdown(*args, **kwargs):
+            def shutdown_complete():
+                future.set_result(True)
+
+            ioloop.IOLoop.current().add_timeout(1, shutdown_complete)
+            return future
+
+        application = web.Application()
+        with mock.patch('sprockets.http.runner.Runner.start_server'):
+            runner = sprockets.http.runner.Runner(application,
+                                                  on_start=[on_started],
+                                                  shutdown=[on_shutdown])
+            runner.run(8000)
+
+        self.assertTrue(future.result())

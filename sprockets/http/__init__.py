@@ -2,7 +2,7 @@ import logging
 import os
 
 
-version_info = (1, 1, 2)
+version_info = (1, 2, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -69,8 +69,13 @@ def run(create_application, settings=None, log_config=None):
     sub-processes are forked (if necessary) and before the IOLoop is
     started.
 
+    The *on_start* key contains functions that are invoked when the IOLoop
+    is started.
+
     The *shutdown* key contains functions that are invoked when a stop
-    signal is received *before* the IOLoop is stopped.
+    signal is received *before* the IOLoop is stopped. These functions
+    can return a :class:`~tornado.concurrent.Future` to allow for asynchronous
+    processing of events during the shutdown phase.
 
     """
     from . import runner

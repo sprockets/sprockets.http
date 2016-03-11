@@ -22,6 +22,11 @@ call when specific events occur.  The following events are supported:
    If any callback raises an exception, then the application is
    terminated **before** the IOLoop is started.
 
+:on_start:
+   This set of callbacks is invoked after Tornado forks sub-processes
+   (based on the ``number_of_procs`` setting) and **after**
+   :meth:`~tornado.ioloop.IOLoop.start` is called.
+
 :shutdown:
    When the application receives a stop signal, it will run each of the
    callbacks before terminating the application instance.  Exceptions
