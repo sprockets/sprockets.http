@@ -2,6 +2,12 @@
 
 Release History
 ===============
+`1.2.0`_ (11 Mar 2016)
+----------------------
+- Add support for the ``on_start`` callback.
+- Add support to wait for the completion of ``shutdown`` callbacks that
+  return a future.
+- Adds new init params to runner.Runner for the three callback types
 
 `1.1.2`_ (23 Feb 2016)
 ----------------------
@@ -61,4 +67,5 @@ Release History
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
 .. _1.1.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.1.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.1.0...master
+.. _1.2.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.2.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.2.0...master
