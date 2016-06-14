@@ -2,6 +2,10 @@
 
 Release History
 ===============
+`Next Release`_
+---------------
+- Add ``httprun`` setup.py command.
+
 `1.2.0`_ (11 Mar 2016)
 ----------------------
 - Add support for the ``on_start`` callback.

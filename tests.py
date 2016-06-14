@@ -1,12 +1,20 @@
 import contextlib
+import distutils.dist
+import distutils.errors
 import logging
 import os
 import json
 import time
 import unittest
 
+try:
+    from unittest import mock
+    open_name = 'builtins.open'
+except ImportError:
+    import mock
+    open_name = '__builtin__.open'
+
 from tornado import concurrent, httputil, ioloop, testing, web
-import mock
 
 import sprockets.http.mixins
 import sprockets.http.runner
@@ -44,8 +52,9 @@ class MockHelper(unittest.TestCase):
             mocker.stop()
         del self._mocks[:]
 
-    def start_mock(self, target):
-        mocked = mock.patch(target)
+    def start_mock(self, target, existing_mock=None):
+        target_mock = mock.Mock() if existing_mock is None else existing_mock
+        mocked = mock.patch(target, target_mock)
         self._mocks.append(mocked)
         return mocked.start()
 
@@ -394,7 +403,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
 
     def test_that_initializer_creates_runner_callbacks_dict(self):
         application = web.Application()
-        _ = sprockets.http.runner.Runner(application)
+        sprockets.http.runner.Runner(application)
         self.assertEqual(application.runner_callbacks['before_run'], [])
         self.assertEqual(application.runner_callbacks['on_start'], [])
         self.assertEqual(application.runner_callbacks['shutdown'], [])
@@ -470,7 +479,6 @@ class AsyncRunTests(unittest.TestCase):
             runner.run(8000)
         self.assertTrue(future.result())
 
-
     def test_that_shutdown_futures_are_waited_on(self):
         future = concurrent.Future()
 
@@ -493,3 +501,125 @@ class AsyncRunTests(unittest.TestCase):
             runner.run(8000)
 
         self.assertTrue(future.result())
+
+
+class RunCommandTests(MockHelper, unittest.TestCase):
+
+    def setUp(self):
+        super(RunCommandTests, self).setUp()
+        self.distribution = mock.Mock(spec=distutils.dist.Distribution,
+                                      verbose=3)
+
+    def test_that_environment_file_is_processed(self):
+        os_module = self.start_mock('sprockets.http.runner.os')
+        os_module.environ = {'SHOULD_BE': 'REMOVED'}
+        os_module.path.exists.return_value = True
+
+        open_mock = mock.mock_open(read_data='\n'.join([
+            'export SIMPLE=1',
+            'NOT_EXPORTED=2  # with comment too!',
+            'export DQUOTED="value with space"',
+            "export SQUOTED='value with space'",
+            'BAD LINE',
+            '# commented line',
+            'SHOULD_BE=',
+        ]))
+        self.start_mock(open_name, open_mock)
+
+        command = sprockets.http.runner.RunCommand(self.distribution)
+        command.dry_run = True
+        command._find_callable = mock.Mock()
+        command.env_file = 'name.conf'
+        command.application = 'required.to:exist'
+
+        command.ensure_finalized()
+        command.run()
+
+        os_module.path.exists.assert_called_once_with('name.conf')
+        self.assertEqual(
+            sorted(list(os_module.environ.keys())),
+            sorted(['SIMPLE', 'NOT_EXPORTED', 'DQUOTED', 'SQUOTED']))
+        self.assertEqual(os_module.environ['SIMPLE'], '1')
+        self.assertEqual(os_module.environ['NOT_EXPORTED'], '2')
+        self.assertEqual(os_module.environ['DQUOTED'], 'value with space')
+        self.assertEqual(os_module.environ['SQUOTED'], 'value with space')
+
+    def test_that_port_option_sets_environment_variable(self):
+        os_module = self.start_mock('sprockets.http.runner.os')
+        os_module.environ = {}
+        os_module.path.exists.return_value = True
+
+        open_mock = mock.mock_open(read_data='PORT=2')
+        self.start_mock(open_name, open_mock)
+
+        command = sprockets.http.runner.RunCommand(self.distribution)
+        command.dry_run = True
+        command._find_callable = mock.Mock()
+        command.env_file = 'name.conf'
+        command.application = 'required.to:exist'
+        command.port = '3'
+
+        command.ensure_finalized()
+        command.run()
+
+        self.assertEqual(os_module.environ['PORT'], '3')
+
+    def test_that_application_callable_is_created(self):
+        # this is somewhat less hacky than patching __import__ ...
+        # just add a "recorder" around the _find_callable method
+        # in a not so hacky way
+        command = sprockets.http.runner.RunCommand(self.distribution)
+
+        result_closure = {'real_method': command._find_callable}
+
+        def patched():
+            result_closure['result'] = result_closure['real_method']()
+            return result_closure['result']
+
+        command.dry_run = True
+        command.application = 'sprockets.http.runner:Runner'
+        command._find_callable = patched
+
+        command.ensure_finalized()
+        command.run()
+        self.assertEqual(result_closure['result'],
+                         sprockets.http.runner.Runner)
+
+    def test_that_finalize_options_requires_application_option(self):
+        command = sprockets.http.runner.RunCommand(self.distribution)
+        command.env_file = 'not used here'
+        with self.assertRaises(distutils.errors.DistutilsArgError):
+            command.ensure_finalized()
+
+    def test_that_finalize_options_with_nonexistant_env_file_fails(self):
+        os_module = self.start_mock('sprockets.http.runner.os')
+        os_module.path.exists.return_value = False
+
+        command = sprockets.http.runner.RunCommand(self.distribution)
+        command.application = examples.make_app
+        command.env_file = 'file.conf'
+        with self.assertRaises(distutils.errors.DistutilsArgError):
+            command.ensure_finalized()
+        os_module.path.exists.assert_called_once_with('file.conf')
+
+    def test_that_sprockets_http_run_is_called_appropriately(self):
+        # yes this god awful path is actually correct :/
+        run_function = self.start_mock(
+            'sprockets.http.runner.sprockets.http.run')
+
+        command = sprockets.http.runner.RunCommand(self.distribution)
+
+        result_closure = {'real_method': command._find_callable}
+
+        def patched():
+            result_closure['result'] = result_closure['real_method']()
+            return result_closure['result']
+
+        command.application = 'examples:make_app'
+        command.dry_run = False
+        command._find_callable = patched
+
+        command.ensure_finalized()
+        command.run()
+
+        run_function.assert_called_once_with(result_closure['result'])

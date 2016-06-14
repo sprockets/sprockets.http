@@ -38,6 +38,9 @@ setuptools.setup(
     license='BSD',
     namespace_packages=['sprockets'],
     packages=setuptools.find_packages(),
+    entry_points={
+        'distutils.commands': ['httprun=sprockets.http.runner:RunCommand'],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: No Input/Output (Daemon)',
