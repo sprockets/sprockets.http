@@ -90,7 +90,8 @@ class Runner(object):
         signal.signal(signal.SIGINT, self._on_signal)
         xheaders = self.application.settings.get('xheaders', False)
 
-        self.server = httpserver.HTTPServer(self.application, xheaders=xheaders)
+        self.server = httpserver.HTTPServer(self.application,
+                                            xheaders=xheaders)
         if self.application.settings.get('debug', False):
             self.logger.info('starting 1 process on port %d', port_number)
             self.server.listen(port_number)
