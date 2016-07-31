@@ -596,7 +596,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
         os_module.path.exists.return_value = False
 
         command = sprockets.http.runner.RunCommand(self.distribution)
-        command.application = examples.make_app
+        command.application = examples.Application
         command.env_file = 'file.conf'
         with self.assertRaises(distutils.errors.DistutilsArgError):
             command.ensure_finalized()
@@ -615,7 +615,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
             result_closure['result'] = result_closure['real_method']()
             return result_closure['result']
 
-        command.application = 'examples:make_app'
+        command.application = 'examples:Application'
         command.dry_run = False
         command._find_callable = patched
 

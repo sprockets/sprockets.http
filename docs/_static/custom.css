@@ -1,1 +1,4 @@
-h1.logo {font-size: 18pt}
+h1.logo {font-size:inherit}
+th.field-name {hyphens: manual; -webkit-hyphens: none}
+dl.class dt {padding-left: 5em; padding-right: 5em; text-indent: -5em}
+dl.function dt {padding-left: 5em; padding-right: 5em; text-indent: -5em}

@@ -1,6 +1,6 @@
 from tornado import web
 
-from sprockets.http import mixins, run
+from sprockets.http import app, mixins, run
 
 
 class StatusHandler(mixins.ErrorLogger, mixins.ErrorWriter,
@@ -27,12 +27,14 @@ class StatusHandler(mixins.ErrorLogger, mixins.ErrorWriter,
             self.set_status(status_code)
 
 
-def make_app(**settings):
-    settings['debug'] = True  # disable JSON logging
-    return web.Application([
-        web.url(r'/status/(?P<status_code>\d+)', StatusHandler),
-    ], **settings)
+class Application(app.Application):
+
+    def __init__(self, **kwargs):
+        kwargs['debug'] = True
+        super(Application, self).__init__(
+            [web.url(r'/status/(?P<status_code>\d+)', StatusHandler)],
+            **kwargs)
 
 
 if __name__ == '__main__':
-    run(make_app)
+    run(Application)

@@ -2,6 +2,13 @@
 
 Release History
 ===============
+`Next Release`_
+---------------
+- Separate the concerns of running the application from the callback
+  chains.  The latter has been refactored into :mod:`sprockets.http.app`.
+  This change is completely invisible to the outside world.
+- Officially deprecated the ``runner_callbacks`` application attribute.
+
 `1.3.3`_ (20 Sept)
 ------------------
 - Include correlation-id in the structured log data when logging.
