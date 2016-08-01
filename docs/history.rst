@@ -5,6 +5,7 @@ Release History
 `Next Release`_
 ---------------
 - Add ``httprun`` setup.py command.
+- Use ``declare_namespace`` to declare the sprockets namespace package.
 
 `1.2.0`_ (11 Mar 2016)
 ----------------------
