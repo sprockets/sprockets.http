@@ -34,6 +34,7 @@ html_theme_options = {
     'travis_button': True,
     'codecov_button': True,
 }
+html_static_path = ['_static']
 
 intersphinx_mapping = {
     'python': ('http://docs.python.org/3/', None),

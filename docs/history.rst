@@ -2,6 +2,11 @@
 
 Release History
 ===============
+`Next Release`_
+---------------
+- Add ``httprun`` setup.py command.
+- Use ``declare_namespace`` to declare the sprockets namespace package.
+
 `1.2.0`_ (11 Mar 2016)
 ----------------------
 - Add support for the ``on_start`` callback.
@@ -67,5 +72,7 @@ Release History
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
 .. _1.1.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.1.0
+.. _1.1.1: https://github.com/sprockets/sprockets.http/compare/1.1.0...1.1.1
+.. _1.1.2: https://github.com/sprockets/sprockets.http/compare/1.1.1...1.1.2
 .. _1.2.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.2.0
 .. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.2.0...master
