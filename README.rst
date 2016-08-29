@@ -8,10 +8,8 @@ in a clean manner.
 * ``SIGTERM`` is gracefully handled with respect to outstanding timeouts
   and callbacks
 * Listening port is configured by the ``PORT`` environment variable
-* ``logging`` layer is configured to output JSON by default
 * *"Debug mode"* is enabled by the ``DEBUG`` environment variable
 
-  - makes log out human-readable
   - catches ``SIGINT`` (e.g., ``Ctrl+C``)
   - application run in a single process
 

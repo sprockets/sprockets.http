@@ -1,8 +1,9 @@
 import logging
+import logging.config
 import os
 
 
-version_info = (1, 2, 0)
+version_info = (1, 3, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -25,10 +26,6 @@ def run(create_application, settings=None, log_config=None):
 
     If the `settings` parameter includes a value for the ``debug``
     key, then the application will be run in Tornado debug mode.
-    This setting also changes how the logging layer is configured.
-    When running in "debug" mode, logs are written to standard out
-    using a human-readable format instead of the standard JSON
-    payload.
 
     If the `settings` parameter does not include a ``debug`` key,
     then debug mode will be enabled based on the :envvar:`DEBUG`
@@ -102,8 +99,8 @@ def _get_logging_config(debug):
             'incremental': False,
             'formatters': {
                 'debug': {
-                    'format': ('[%(asctime)s] %(levelname)-8s %(process)-6s '
-                               '%(name)s: %(message)s.')
+                    'format': ('[%(asctime)s] %(levelname)-8s %(name)s: '
+                               '%(message)s')
                 },
             },
             'handlers': {
@@ -125,14 +122,19 @@ def _get_logging_config(debug):
             'disable_existing_loggers': False,
             'incremental': False,
             'formatters': {
-                'json': {
-                    '()': 'sprockets.logging.JSONRequestFormatter',
+                'info': {
+                    'format': ('[%(asctime)s] '
+                               '%(process)-6s '
+                               '%(levelname)-8s '
+                               '%(name)s: %(message)s')
                 },
             },
             'handlers': {
                 'console': {
                     'class': 'logging.StreamHandler',
-                    'formatter': 'json',
+                    'stream': 'ext://sys.stdout',
+                    'level': 'INFO',
+                    'formatter': 'info',
                 },
             },
             'root': {

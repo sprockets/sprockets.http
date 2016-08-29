@@ -13,7 +13,6 @@ import sys
 
 from tornado import concurrent, httpserver, ioloop
 
-import sprockets.logging
 import sprockets.http
 
 
@@ -96,8 +95,6 @@ class Runner(object):
             self.logger.info('starting 1 process on port %d', port_number)
             self.server.listen(port_number)
         else:
-            self.application.settings.setdefault(
-                'log_function', sprockets.logging.tornado_log_function)
             self.logger.info('starting processes on port %d', port_number)
             self.server.bind(port_number)
             self.server.start(number_of_procs)
