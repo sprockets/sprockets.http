@@ -2,10 +2,11 @@
 
 Release History
 ===============
-`Next Release`_
----------------
+`1.3.0`_ (11 Mar 2016)
+----------------------
 - Add ``httprun`` setup.py command.
 - Use ``declare_namespace`` to declare the sprockets namespace package.
+- Remove ``JSONRequestFormatter`` logging when not in debug mode
 
 `1.2.0`_ (11 Mar 2016)
 ----------------------
@@ -75,4 +76,5 @@ Release History
 .. _1.1.1: https://github.com/sprockets/sprockets.http/compare/1.1.0...1.1.1
 .. _1.1.2: https://github.com/sprockets/sprockets.http/compare/1.1.1...1.1.2
 .. _1.2.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.2.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.2.0...master
+.. _1.3.0: https://github.com/sprockets/sprockets.http/compare/1.2.0...1.3.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.3.0...master
