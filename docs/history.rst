@@ -7,6 +7,7 @@ Release History
 - Add ``httprun`` setup.py command.
 - Use ``declare_namespace`` to declare the sprockets namespace package.
 - Remove ``JSONRequestFormatter`` logging when not in debug mode
+- Remove sprockets.logging dependency
 
 `1.2.0`_ (11 Mar 2016)
 ----------------------
