@@ -3,7 +3,7 @@ import logging.config
 import os
 
 
-version_info = (1, 3, 0)
+version_info = (1, 3, 1)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -123,19 +123,16 @@ def _get_logging_config(debug):
             'incremental': False,
             'formatters': {
                 'info': {
-                    'format': ('[%(asctime)s] '
-                               '%(process)-6s '
-                               '%(levelname)-8s '
-                               '%(name)s: %(message)s')
-                },
+                    'format': '%(levelname)1.1s %(name)s %(message)s'
+                }
             },
             'handlers': {
                 'console': {
                     'class': 'logging.StreamHandler',
                     'stream': 'ext://sys.stdout',
                     'level': 'INFO',
-                    'formatter': 'info',
-                },
+                    'formatter': 'info'
+                }
             },
             'root': {
                 'level': 'INFO',
