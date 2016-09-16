@@ -123,7 +123,14 @@ def _get_logging_config(debug):
             'incremental': False,
             'formatters': {
                 'info': {
-                    'format': '%(levelname)1.1s %(name)s %(message)s'
+                    'format': ('%(levelname)1.1s'
+                               '[sprockets@34085'
+                               ' logger="%(name)s"'
+                               ' process="%(process)s"'
+                               ' line="%(lineno)d"'
+                               ' function="%(funcName)s"'
+                               ' module="%(module)s"'
+                               '] %(message)s')
                 }
             },
             'handlers': {
