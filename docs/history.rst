@@ -2,6 +2,14 @@
 
 Release History
 ===============
+`1.3.2`_ (19 Sept)
+------------------
+- Include the service and environment (if set) in the structured log data.
+
+`1.3.1`_ (16 Sept)
+------------------
+- Change the non-DEBUG log format to include structured data and a leading first byte for log level.
+
 `1.3.0`_ (11 Mar 2016)
 ----------------------
 - Add ``httprun`` setup.py command.
@@ -78,4 +86,6 @@ Release History
 .. _1.1.2: https://github.com/sprockets/sprockets.http/compare/1.1.1...1.1.2
 .. _1.2.0: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.2.0
 .. _1.3.0: https://github.com/sprockets/sprockets.http/compare/1.2.0...1.3.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.3.0...master
+.. _1.3.1: https://github.com/sprockets/sprockets.http/compare/1.3.0...1.3.1
+.. _1.3.2: https://github.com/sprockets/sprockets.http/compare/1.3.1...1.3.2
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.3.3...master

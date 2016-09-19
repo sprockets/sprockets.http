@@ -3,7 +3,7 @@ import logging.config
 import os
 
 
-version_info = (1, 3, 1)
+version_info = (1, 3, 2)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -92,6 +92,12 @@ def run(create_application, settings=None, log_config=None):
 
 
 def _get_logging_config(debug):
+    # Service and environment for logging structured data (if set)
+    log_sd = ''
+    if os.environ.get('SERVICE') and os.environ.get('ENVIRONMENT'):
+        log_sd = ' service="{}" environment="{}"'.format(os.environ['SERVICE'],
+                                                         os.environ[
+                                                             'ENVIRONMENT'])
     if debug:
         return {
             'version': 1,
@@ -125,12 +131,13 @@ def _get_logging_config(debug):
                 'info': {
                     'format': ('%(levelname)1.1s'
                                '[sprockets@34085'
+                               '{}'
                                ' logger="%(name)s"'
                                ' process="%(process)s"'
                                ' line="%(lineno)d"'
                                ' function="%(funcName)s"'
                                ' module="%(module)s"'
-                               '] %(message)s')
+                               '] %(message)s'.format(log_sd))
                 }
             },
             'handlers': {
