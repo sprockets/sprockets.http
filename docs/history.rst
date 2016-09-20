@@ -2,6 +2,10 @@
 
 Release History
 ===============
+`1.3.3`_ (20 Sept)
+------------------
+- Include correlation-id in the structured log data when logging.
+
 `1.3.2`_ (19 Sept)
 ------------------
 - Include the service and environment (if set) in the structured log data.
@@ -88,4 +92,5 @@ Release History
 .. _1.3.0: https://github.com/sprockets/sprockets.http/compare/1.2.0...1.3.0
 .. _1.3.1: https://github.com/sprockets/sprockets.http/compare/1.3.0...1.3.1
 .. _1.3.2: https://github.com/sprockets/sprockets.http/compare/1.3.1...1.3.2
+.. _1.3.3: https://github.com/sprockets/sprockets.http/compare/1.3.2...1.3.3
 .. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.3.3...master

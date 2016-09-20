@@ -3,7 +3,7 @@ import logging.config
 import os
 
 
-version_info = (1, 3, 2)
+version_info = (1, 3, 3)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -91,13 +91,21 @@ def run(create_application, settings=None, log_config=None):
     server.run(port_number, num_procs)
 
 
+class _CorrelationFilter(logging.Filter):
+    """Log filter that ensures that correlation_id is set on each record"""
+
+    def filter(self, record):
+        if not hasattr(record, 'correlation-id'):
+            setattr(record, 'correlation-id', '')
+        return 1
+
+
 def _get_logging_config(debug):
     # Service and environment for logging structured data (if set)
     log_sd = ''
     if os.environ.get('SERVICE') and os.environ.get('ENVIRONMENT'):
-        log_sd = ' service="{}" environment="{}"'.format(os.environ['SERVICE'],
-                                                         os.environ[
-                                                             'ENVIRONMENT'])
+        log_sd = ' service="{}" environment="{}"'.format(
+            os.environ['SERVICE'], os.environ['ENVIRONMENT'])
     if debug:
         return {
             'version': 1,
@@ -132,6 +140,7 @@ def _get_logging_config(debug):
                     'format': ('%(levelname)1.1s'
                                '[sprockets@34085'
                                '{}'
+                               ' correlation_id="%(correlation-id)s"'
                                ' logger="%(name)s"'
                                ' process="%(process)s"'
                                ' line="%(lineno)d"'
@@ -140,12 +149,18 @@ def _get_logging_config(debug):
                                '] %(message)s'.format(log_sd))
                 }
             },
+            'filters': {
+                'correlation': {
+                    '()': _CorrelationFilter,
+                }
+            },
             'handlers': {
                 'console': {
                     'class': 'logging.StreamHandler',
                     'stream': 'ext://sys.stdout',
                     'level': 'INFO',
-                    'formatter': 'info'
+                    'formatter': 'info',
+                    'filters': ['correlation']
                 }
             },
             'root': {
