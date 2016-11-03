@@ -26,6 +26,7 @@ html_theme_path = [alabaster.get_path()]
 html_sidebars = {
     '**': ['about.html', 'navigation.html'],
 }
+html_static_path = ['_static']
 html_theme_options = {
     'github_user': 'sprockets',
     'github_repo': 'sprockets.http',

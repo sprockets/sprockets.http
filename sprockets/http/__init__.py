@@ -3,7 +3,7 @@ import logging.config
 import os
 
 
-version_info = (1, 3, 3)
+version_info = (1, 4, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
@@ -53,26 +53,6 @@ def run(create_application, settings=None, log_config=None):
     traffic to the load balancer's IP address. When running behind a load
     balancer like nginx, it is recommended to pass xheaders=True. The default
     value is False if nothing overrides it.
-
-    .. rubric:: application.runner_callbacks
-
-    The ``runner_callbacks`` attribute is a :class:`dict` of lists
-    of functions to call when an event occurs.  This attribute will be
-    created **AFTER** `create_application` is called and **BEFORE** this
-    function returns.  If the attribute exists on the instance returned
-    from `create_application` , then it will be used as-is.
-
-    The *before_run* key contains functions that are invoked after
-    sub-processes are forked (if necessary) and before the IOLoop is
-    started.
-
-    The *on_start* key contains functions that are invoked when the IOLoop
-    is started.
-
-    The *shutdown* key contains functions that are invoked when a stop
-    signal is received *before* the IOLoop is stopped. These functions
-    can return a :class:`~tornado.concurrent.Future` to allow for asynchronous
-    processing of events during the shutdown phase.
 
     """
     from . import runner

@@ -1,44 +1,117 @@
 API Documentation
 =================
 
-Application Runner
-------------------
+Running your Application
+------------------------
+This library exposes a utility function named :func:`sprockets.http.run`
+for running your application.  You need to pass in a callable that accepts
+keyword parameters destined for :class:`tornado.web.Application` and return
+the application instance.
+
 .. autofunction:: sprockets.http.run
 
-Application Callbacks
-~~~~~~~~~~~~~~~~~~~~~
-Starting with version 0.4.0, :func:`sprockets.http.run` augments the
-:class:`tornado.web.Application` instance with a new attribute named
-``runner_callbacks`` which is a dictionary of lists of functions to
-call when specific events occur.  The following events are supported:
+.. code-block:: python
+   :caption: Using sprockets.http.run
 
-:before_run:
-   This set of callbacks is invoked after Tornado forks sub-processes
-   (based on the ``number_of_procs`` setting) and before
-   :meth:`~tornado.ioloop.IOLoop.start` is called.  Callbacks can
-   safely access the :class:`~tornado.ioloop.IOLoop` without causing
-   the :meth:`~tornado.ioloop.IOLoop.start` method to explode.
+   def create_application(**settings):
+      return web.Application(
+         [
+            # add your handlers here
+         ], **settings)
 
-   If any callback raises an exception, then the application is
-   terminated **before** the IOLoop is started.
+   if __name__ == '__main__':
+      sprockets.http.run(create_application)
 
-:on_start:
-   This set of callbacks is invoked after Tornado forks sub-processes
-   (based on the ``number_of_procs`` setting) and **after**
-   :meth:`~tornado.ioloop.IOLoop.start` is called.
+Since :func:`sprockets.http.run` accepts any callable, you can pass a
+class instance in as well.  The :class:`sprockets.http.app.Application`
+is a specialization of :class:`tornado.web.Application` that includes
+state management callbacks that work together with the ``run`` function
+and provide hooks for performing initialization and shutdown tasks.
 
-:shutdown:
-   When the application receives a stop signal, it will run each of the
-   callbacks before terminating the application instance.  Exceptions
-   raised by the callbacks are simply logged.
+The following example uses :class:`sprockets.http.app.Application` as a
+base class to implement asynchronously connecting to a mythical database
+when the application starts.
 
-See :func:`sprockets.http.run` for a detailed description of how to
-install the runner callbacks.
+.. code-block:: python
+   :caption: Using the Application class
 
-Internal Interfaces
-~~~~~~~~~~~~~~~~~~~
-.. automodule:: sprockets.http.runner
-   :members:
+   from tornado import locks, web
+   from sprockets.http import app, run
+
+   class Application(app.Application):
+      def __init__(self, *args, **kwargs):
+         handlers = [
+            # insert your handlers here
+         ]
+         super(Application, self).__init__(handlers, *args, **kwargs)
+         self.ready_to_serve = locks.Event()
+         self.ready_to_serve.clear()
+         self.on_start_callbacks.append(self._connect_to_database)
+
+      def _connect_to_database(self, _self, iol):
+         def on_connected(future):
+            if future.exception():
+               iol.call_later(0.5, self._connect_to_database, _self, iol)
+            else:
+               self.ready_to_serve.set()
+
+         future = dbconnector.connect()
+         iol.add_future(future, on_connected)
+
+   if __name__ == '__main__':
+      run(Application)
+
+Implementing a ``ready_to_serve`` event is a useful paradigm for applications
+that need to asynchronously initialize before they can service requests.  We
+can continue the example and add a ``/status`` endpoint that makes use of
+the event:
+
+.. code-block:: python
+   :caption: Implementing health checks
+
+   class StatusHandler(web.RequestHandler):
+      @gen.coroutine
+      def prepare(self):
+         maybe_future = super(StatusHandler, self).prepare()
+         if concurrent.is_future(maybe_future):
+            yield maybe_future
+         if not self._finished and not self.application.ready_to_serve.is_set():
+            self.set_header('Retry-After', '5')
+            self.set_status(503, 'Not Ready')
+            self.finish()
+
+      def get(self):
+         self.set_status(200)
+         self.write(json.dumps({'status': 'ok'})
+
+Before Run Callbacks
+^^^^^^^^^^^^^^^^^^^^
+This set of callbacks is invoked after Tornado forks sub-processes
+(based on the ``number_of_procs`` setting) and before
+:meth:`~tornado.ioloop.IOLoop.start` is called.  Callbacks can
+safely access the :class:`~tornado.ioloop.IOLoop` without causing
+the :meth:`~tornado.ioloop.IOLoop.start` method to explode.
+
+If any callback raises an exception, then the application is
+terminated **before** the IOLoop is started.
+
+.. seealso:: :attr:`~sprockets.http.app.CallbackManager.before_run_callbacks`
+
+On Start Callbacks
+^^^^^^^^^^^^^^^^^^
+This set of callbacks is invoked after Tornado forks sub-processes
+(using :meth:`tornado.ioloop.IOLoop.spawn_callback`) and **after**
+:meth:`~tornado.ioloop.IOLoop.start` is called.
+
+.. seealso:: :attr:`~sprockets.http.app.CallbackManager.on_start_callbacks`
+
+Shutdown Callbacks
+^^^^^^^^^^^^^^^^^^
+When the application receives a stop signal, it will run each of the
+callbacks before terminating the application instance.  Exceptions
+raised by the callbacks are simply logged.
+
+.. seealso:: :attr:`~sprockets.http.app.CallbackManager.on_shutdown_callbacks`
 
 Response Logging
 ----------------
@@ -105,4 +178,12 @@ If :class:`~sprockets.mixins.mediatype.ContentMixin` is being used as well,
 document, otherwise it is sent as JSON.
 
 .. autoclass:: sprockets.http.mixins.ErrorWriter
+   :members:
+
+Internal Interfaces
+-------------------
+.. automodule:: sprockets.http.runner
+   :members:
+
+.. automodule:: sprockets.http.app
    :members:
