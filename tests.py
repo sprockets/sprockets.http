@@ -266,12 +266,12 @@ class RunTests(MockHelper, unittest.TestCase):
 
     def test_that_port_defaults_to_8000(self):
         sprockets.http.run(mock.Mock())
-        self.runner_instance.run.called_once_with(8000, mock.ANY)
+        self.runner_instance.run.assert_called_once_with(8000, mock.ANY)
 
     def test_that_port_envvar_sets_port_number(self):
         with override_environment_variable('PORT', '8888'):
             sprockets.http.run(mock.Mock())
-            self.runner_instance.run.called_once_with(8888, mock.ANY)
+            self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
     def test_that_port_kwarg_sets_port_number(self):
         sprockets.http.run(mock.Mock(), settings={'port': 8888})

@@ -57,7 +57,7 @@ class CallbackManager(object):
     callbacks.  Sub-classes are responsible for gluing in the actual
     :class:`tornado.web.Application` object and the
     :mod:`sprockets.http.runner` module is responsible for starting up
-    the HTTP stack and calling the :meth:`.run` and :meth:`.stop`
+    the HTTP stack and calling the :meth:`.start` and :meth:`.stop`
     methods.
 
     .. attribute:: runner_callbacks
@@ -84,10 +84,16 @@ class CallbackManager(object):
         self.runner_callbacks.setdefault('on_start', [])
         self.runner_callbacks.setdefault('shutdown', [])
 
-    def run(self, io_loop):
+    def start(self, io_loop):
+        """
+        Run the ``before_run`` callbacks and queue to ``on_start`` callbacks.
+
+        :param tornado.ioloop.IOLoop io_loop: loop to start the app on.
+
+        """
         for callback in self.before_run_callbacks:
             try:
-                callback(self._tornado_application, io_loop)
+                callback(self.tornado_application, io_loop)
             except Exception:
                 self.logger.error('before_run callback %r cancelled start',
                                   callback, exc_info=1)
@@ -95,15 +101,25 @@ class CallbackManager(object):
                 raise
 
         for callback in self.on_start_callbacks:
-            io_loop.spawn_callback(callback, self._tornado_application,
-                                   io_loop)
+            io_loop.spawn_callback(callback, self.tornado_application, io_loop)
 
     def stop(self, io_loop):
+        """
+        Asynchronously stop the application.
+
+        :param tornado.ioloop.IOLoop io_loop: loop to run until all
+            callbacks, timeouts, and queued calls are complete
+
+        Call this method to start the application shutdown process.
+        The IOLoop will be stopped once the application is completely
+        shut down.
+
+        """
         running_async = False
         shutdown = _ShutdownHandler(io_loop)
         for callback in self.on_shutdown_callbacks:
             try:
-                maybe_future = callback(self._tornado_application)
+                maybe_future = callback(self.tornado_application)
                 if concurrent.is_future(maybe_future):
                     shutdown.add_future(maybe_future)
                     running_async = True
@@ -164,6 +180,11 @@ class CallbackManager(object):
 
         """
         return self.runner_callbacks['shutdown']
+
+    @property
+    def tornado_application(self):
+        """The underlying :class:`tornado.web.Application` instance."""
+        return self._tornado_application
 
 
 class Application(CallbackManager, web.Application):

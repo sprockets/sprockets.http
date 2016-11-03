@@ -73,8 +73,8 @@ class Runner(object):
         signal.signal(signal.SIGINT, self._on_signal)
         xheaders = self.application.settings.get('xheaders', False)
 
-        self.server = httpserver.HTTPServer(self.application,
-                                            xheaders=xheaders)
+        self.server = httpserver.HTTPServer(
+            self.application.tornado_application, xheaders=xheaders)
         if self.application.settings.get('debug', False):
             self.logger.info('starting 1 process on port %d', port_number)
             self.server.listen(port_number)
@@ -110,7 +110,7 @@ class Runner(object):
         iol = ioloop.IOLoop.instance()
 
         try:
-            self.application.run(iol)
+            self.application.start(iol)
         except:
             self.logger.exception('application terminated during start, '
                                   'exiting')
