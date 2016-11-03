@@ -23,12 +23,10 @@ your application wrapping code should look something like the following.
    from tornado import web
    import sprockets.http
 
-
    def make_app(**settings):
        return web.Application([
           # insert your handlers
        ], **settings)
-
 
    if __name__ == '__main__':
        sprockets.http.run(make_app)
@@ -40,6 +38,26 @@ when it is sent either an interrupt or terminate signal.
 It also takes care of configuring the standard `logging`_ module albeit
 in a opinionated way.  The goal is to let you write your application
 without worrying about figuring out how to run and monitor it reliably.
+
+If you are OO-minded, then you can also make use of a custom ``Application``
+class instead of writing a ``make_app`` function:
+
+.. code-block:: python
+
+   import sprockets.http.app
+
+   class Application(sprockets.http.app.Application):
+       def __init__(self, *args, **kwargs):
+           handlers = [
+               # insert your handlers
+           ]
+           super(Application, self).__init__(handlers, *args, **kwargs)
+
+   if __name__ == '__main__':
+       sprockets.http.run(Application)
+
+This approach is handy if you have application level state and logic that
+needs to be bundled together.
 
 From setup.py
 ~~~~~~~~~~~~~

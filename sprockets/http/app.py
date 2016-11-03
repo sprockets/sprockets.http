@@ -67,7 +67,7 @@ class CallbackManager(object):
        :attr:`.before_run_callbacks`, :attr:`.on_start_callbacks`,
        and :attr:`on_shutdown_callbacks`.
 
-       .. deprecated:: 1.3
+       .. deprecated:: 1.4
 
           Use the property callbacks instead of this dictionary.  It
           will be going away in a future release.
@@ -134,9 +134,7 @@ class CallbackManager(object):
     @property
     def before_run_callbacks(self):
         """
-        Synchronous functions called before the IOLoop is started.
-
-        :rtype: list
+        List of synchronous functions called before the IOLoop is started.
 
         The *before_run* callbacks are called after the IOLoop is created
         and before it is started.  The callbacks are run synchronously and
@@ -150,9 +148,7 @@ class CallbackManager(object):
     @property
     def on_start_callbacks(self):
         """
-        Asynchronous functions spawned before the IOLoop is started.
-
-        :rtype: list
+        List of asynchronous functions spawned before the IOLoop is started.
 
         The *on_start* callbacks are spawned after the IOLoop is created
         and before it is started.  The callbacks are run asynchronously
@@ -167,9 +163,7 @@ class CallbackManager(object):
     @property
     def on_shutdown_callbacks(self):
         """
-        Functions when the application is shutting down.
-
-        :rtype: list
+        List of functions when the application is shutting down.
 
         The *on_shutdown* callbacks are called after the HTTP server has
         been stopped.  If a callback returns a
@@ -194,6 +188,9 @@ class Application(CallbackManager, web.Application):
     Using this class instead of the vanilla Tornado ``Application``
     class provides a clean way to customize application-level
     constructs such as connection pools.
+
+    Note that much of the functionality is implemented in
+    :class:`.CallbackManager`.
 
     """
 

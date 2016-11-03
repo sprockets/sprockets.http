@@ -22,87 +22,67 @@ the application instance.
    if __name__ == '__main__':
       sprockets.http.run(create_application)
 
-In version 0.4, support for a ``runner_callbacks`` attribute was added to the
-application instance.  It is a dictionary containing lists of callbacks to
-invoke at certain points in the application lifecycle.  If the application
-instance returned from your *make application* function defines the
-attribute, then :func:`sprockets.http.run` will make sure that they are
-invoked at the appropriate time.
+Since :func:`sprockets.http.run` accepts any callable, you can pass a
+class instance in as well.  The :class:`sprockets.http.app.Application`
+is a specialization of :class:`tornado.web.Application` that includes
+state management callbacks that work together with the ``run`` function
+and provide hooks for performing initialization and shutdown tasks.
 
-The following example uses the callbacks to asynchronously connect to an
-imaginary database and maintain a :class:`tornado.locks.Event` that can be
-used to tell if the application can service requests or not.
-
-.. code-block:: python
-   :caption: Adding callbacks
-
-   from tornado import gen, locks, web
-
-   def _connect_to_database(app, iol):
-      def _connected(future):
-         if future.exception():
-            coro = gen.sleep(0.5)
-            iol.add_future(coro, lambda f: _connect_to_database(app, iol))
-         else:
-            app.ready_to_serve.set()
-
-      future = dbconnector.connect()
-      iol.add_future(future, _connected)
-
-   def create_application(**settings):
-      app = web.Application(handlers, **settings)
-      callbacks = {
-         'before_run': lambda app, iol: app.ready_to_serve.clear(),
-         'on_start': _connect_to_database,
-      }
-      setattr(app, 'ready_to_serve', locks.Event())
-      setattr(app, 'runner_callbacks', callbacks)
-      return app
-
-   if __name__ == '__main__':
-      sprockets.http.run(create_application)
-
-Start with version 1.3, this method was codified further with the creation
-of the :class:`sprockets.http.app.Application` class.  Instead of manually
-poking attributes into the application object in your *make application*
-function, create a :class:`sprockets.http.app.Application` instance and set
-the callback attributes that *or* sub-class
-:class:`~sprockets.http.app.Application` and add customizations in the
-initializer as shown below.  The sub-class approach is the recommended if you
-have anything of interest in your application class.
-
-The following snippet re-implements the previous example.
+The following example uses :class:`sprockets.http.app.Application` as a
+base class to implement asynchronously connecting to a mythical database
+when the application starts.
 
 .. code-block:: python
+   :caption: Using the Application class
 
-   class Application(sprockets.http.app.Application):
-      def __init__(self, **kwargs):
-         super(Application, self).__init__(
-            [
-               # additional handlers here
-            ],
-            **kwargs)
+   from tornado import locks, web
+   from sprockets.http import app, run
+
+   class Application(app.Application):
+      def __init__(self, *args, **kwargs):
+         handlers = [
+            # insert your handlers here
+         ]
+         super(Application, self).__init__(handlers, *args, **kwargs)
          self.ready_to_serve = locks.Event()
+         self.ready_to_serve.clear()
          self.on_start_callbacks.append(self._connect_to_database)
-         self.io_loop = None
 
-      def _create_database(self, app, io_loop):
-         self.io_loop = io_loop
-         self._connect()
+      def _connect_to_database(self, _self, iol):
+         def on_connected(future):
+            if future.exception():
+               iol.call_later(0.5, self._connect_to_database, _self, iol)
+            else:
+               self.ready_to_serve.set()
 
-      def _connect(self, *ignored):
-         coro = dbconnector.connect()
-         self.io_loop.add_future(coro, self._on_connected)
-
-      def _on_connected(self, future):
-         if future.exception():
-            coro = gen.sleep(0.5)
-            self.io_loop.add_future(coro, self._connect)
-         else:
-            self.ready_to_serve.set()
+         future = dbconnector.connect()
+         iol.add_future(future, on_connected)
 
    if __name__ == '__main__':
-      sprockets.http.run(Application)
+      run(Application)
+
+Implementing a ``ready_to_serve`` event is a useful paradigm for applications
+that need to asynchronously initialize before they can service requests.  We
+can continue the example and add a ``/status`` endpoint that makes use of
+the event:
+
+.. code-block:: python
+   :caption: Implementing health checks
+
+   class StatusHandler(web.RequestHandler):
+      @gen.coroutine
+      def prepare(self):
+         maybe_future = super(StatusHandler, self).prepare()
+         if concurrent.is_future(maybe_future):
+            yield maybe_future
+         if not self._finished and not self.ready_to_serve.is_set():
+            self.set_header('Retry-After', '5')
+            self.set_status(503, 'Not Ready')
+            self.finish()
+
+      def get(self):
+         self.set_status(200)
+         self.write(json.dumps({'status': 'ok'})
 
 Before Run Callbacks
 ^^^^^^^^^^^^^^^^^^^^
