@@ -75,7 +75,7 @@ the event:
          maybe_future = super(StatusHandler, self).prepare()
          if concurrent.is_future(maybe_future):
             yield maybe_future
-         if not self._finished and not self.ready_to_serve.is_set():
+         if not self._finished and not self.application.ready_to_serve.is_set():
             self.set_header('Retry-After', '5')
             self.set_status(503, 'Not Ready')
             self.finish()
