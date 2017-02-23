@@ -8,8 +8,6 @@ for running your application.  You need to pass in a callable that accepts
 keyword parameters destined for :class:`tornado.web.Application` and return
 the application instance.
 
-.. autofunction:: sprockets.http.run
-
 .. code-block:: python
    :caption: Using sprockets.http.run
 
@@ -26,8 +24,32 @@ Since :func:`sprockets.http.run` accepts any callable, you can pass a
 class instance in as well.  The :class:`sprockets.http.app.Application`
 is a specialization of :class:`tornado.web.Application` that includes
 state management callbacks that work together with the ``run`` function
-and provide hooks for performing initialization and shutdown tasks.
+and provide hooks for performing initialization and shutdown tasks.  The
+callbacks are simply lists of callables that are invoked at well-defined
+points in the application life-cycle.
 
+Before Run Callbacks
+   This set of callbacks is invoked after Tornado forks sub-processes
+   (based on the ``number_of_procs`` setting) and before
+   :meth:`~tornado.ioloop.IOLoop.start` is called.  Callbacks can
+   safely access the :class:`~tornado.ioloop.IOLoop` without causing
+   the :meth:`~tornado.ioloop.IOLoop.start` method to explode.
+
+   If any callback raises an exception, then the application is
+   terminated **before** the IOLoop is started.
+
+On Start Callbacks
+   This set of callbacks is invoked after Tornado forks sub-processes
+   (using :meth:`tornado.ioloop.IOLoop.spawn_callback`) and **after**
+   :meth:`~tornado.ioloop.IOLoop.start` is called.
+
+Shutdown Callbacks
+   When the application receives a stop signal, it will run each of the
+   callbacks before terminating the application instance.  Exceptions
+   raised by the callbacks are simply logged.
+
+Examples
+^^^^^^^^
 The following example uses :class:`sprockets.http.app.Application` as a
 base class to implement asynchronously connecting to a mythical database
 when the application starts.
@@ -84,34 +106,12 @@ the event:
          self.set_status(200)
          self.write(json.dumps({'status': 'ok'})
 
-Before Run Callbacks
-^^^^^^^^^^^^^^^^^^^^
-This set of callbacks is invoked after Tornado forks sub-processes
-(based on the ``number_of_procs`` setting) and before
-:meth:`~tornado.ioloop.IOLoop.start` is called.  Callbacks can
-safely access the :class:`~tornado.ioloop.IOLoop` without causing
-the :meth:`~tornado.ioloop.IOLoop.start` method to explode.
+API Reference
+^^^^^^^^^^^^^
+.. autofunction:: sprockets.http.run
 
-If any callback raises an exception, then the application is
-terminated **before** the IOLoop is started.
-
-.. seealso:: :attr:`~sprockets.http.app.CallbackManager.before_run_callbacks`
-
-On Start Callbacks
-^^^^^^^^^^^^^^^^^^
-This set of callbacks is invoked after Tornado forks sub-processes
-(using :meth:`tornado.ioloop.IOLoop.spawn_callback`) and **after**
-:meth:`~tornado.ioloop.IOLoop.start` is called.
-
-.. seealso:: :attr:`~sprockets.http.app.CallbackManager.on_start_callbacks`
-
-Shutdown Callbacks
-^^^^^^^^^^^^^^^^^^
-When the application receives a stop signal, it will run each of the
-callbacks before terminating the application instance.  Exceptions
-raised by the callbacks are simply logged.
-
-.. seealso:: :attr:`~sprockets.http.app.CallbackManager.on_shutdown_callbacks`
+.. autoclass:: sprockets.http.app.Application
+   :members:
 
 Response Logging
 ----------------
@@ -187,3 +187,4 @@ Internal Interfaces
 
 .. automodule:: sprockets.http.app
    :members:
+   :exclude-members: Application
