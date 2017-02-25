@@ -48,7 +48,79 @@ class _ShutdownHandler(object):
             self.logger.info('stopped IOLoop')
 
 
-class Application(web.Application):
+class _Application(object):
+
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.before_run_callbacks = []
+        self.on_start_callbacks = []
+        self.on_shutdown_callbacks = []
+
+        self.before_run_callbacks.extend(kwargs.pop('before_run', []))
+        self.on_start_callbacks.extend(kwargs.pop('on_start', []))
+        self.on_shutdown_callbacks.extend(kwargs.pop('on_shutdown', []))
+
+        super(_Application, self).__init__(*args, **kwargs)
+
+    @property
+    def tornado_application(self):
+        """
+        Return the :class:`tornado.web.Application` instance.
+
+        :rtype: tornado.web.Application
+
+        """
+        raise NotImplementedError
+
+    def start(self, io_loop):
+        """
+        Run the ``before_run`` callbacks and queue to ``on_start`` callbacks.
+
+        :param tornado.ioloop.IOLoop io_loop: loop to start the app on.
+
+        """
+        for callback in self.before_run_callbacks:
+            try:
+                callback(self.tornado_application, io_loop)
+            except Exception:
+                self.logger.error('before_run callback %r cancelled start',
+                                  callback, exc_info=1)
+                self.stop(io_loop)
+                raise
+
+        for callback in self.on_start_callbacks:
+            io_loop.spawn_callback(callback, self.tornado_application, io_loop)
+
+    def stop(self, io_loop):
+        """
+        Asynchronously stop the application.
+
+        :param tornado.ioloop.IOLoop io_loop: loop to run until all
+            callbacks, timeouts, and queued calls are complete
+
+        Call this method to start the application shutdown process.
+        The IOLoop will be stopped once the application is completely
+        shut down.
+
+        """
+        running_async = False
+        shutdown = _ShutdownHandler(io_loop)
+        for callback in self.on_shutdown_callbacks:
+            try:
+                maybe_future = callback(self.tornado_application)
+                if concurrent.is_future(maybe_future):
+                    shutdown.add_future(maybe_future)
+                    running_async = True
+            except Exception as error:
+                self.logger.warning('exception raised from shutdown '
+                                    'callback %r ignored: %s',
+                                    callback, error, exc_info=1)
+
+        if not running_async:
+            shutdown.on_shutdown_ready()
+
+
+class Application(_Application, web.Application):
     """
     Callback-aware version of :class:`tornado.web.Application`.
 
@@ -103,67 +175,12 @@ class Application(web.Application):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.before_run_callbacks = []
-        self.on_start_callbacks = []
-        self.on_shutdown_callbacks = []
-
-        self.before_run_callbacks.extend(kwargs.pop('before_run', []))
-        self.on_start_callbacks.extend(kwargs.pop('on_start', []))
-        self.on_shutdown_callbacks.extend(kwargs.pop('on_shutdown', []))
-
-        super(Application, self).__init__(self, *args, **kwargs)
-
-    def start(self, io_loop):
-        """
-        Run the ``before_run`` callbacks and queue to ``on_start`` callbacks.
-
-        :param tornado.ioloop.IOLoop io_loop: loop to start the app on.
-
-        """
-        for callback in self.before_run_callbacks:
-            try:
-                callback(self, io_loop)
-            except Exception:
-                self.logger.error('before_run callback %r cancelled start',
-                                  callback, exc_info=1)
-                self.stop(io_loop)
-                raise
-
-        for callback in self.on_start_callbacks:
-            io_loop.spawn_callback(callback, self, io_loop)
-
-    def stop(self, io_loop):
-        """
-        Asynchronously stop the application.
-
-        :param tornado.ioloop.IOLoop io_loop: loop to run until all
-            callbacks, timeouts, and queued calls are complete
-
-        Call this method to start the application shutdown process.
-        The IOLoop will be stopped once the application is completely
-        shut down.
-
-        """
-        running_async = False
-        shutdown = _ShutdownHandler(io_loop)
-        for callback in self.on_shutdown_callbacks:
-            try:
-                maybe_future = callback(self)
-                if concurrent.is_future(maybe_future):
-                    shutdown.add_future(maybe_future)
-                    running_async = True
-            except Exception as error:
-                self.logger.warning('exception raised from shutdown '
-                                    'callback %r ignored: %s',
-                                    callback, error, exc_info=1)
-
-        if not running_async:
-            shutdown.on_shutdown_ready()
+    @property
+    def tornado_application(self):
+        return self
 
 
-class _ApplicationAdapter(object):
+class _ApplicationAdapter(_Application):
     """
     Simple adapter for a :class:`tornado.web.Application` instance.
 
@@ -179,66 +196,22 @@ class _ApplicationAdapter(object):
     """
 
     def __init__(self, application):
-        self.tornado_application = application
-        self.settings = self.tornado_application.settings
-        self.logger = logging.getLogger(self.__class__.__name__)
-
         runner_callbacks = getattr(application, 'runner_callbacks', {})
-        self.before_run_callbacks = runner_callbacks.get('before_run', [])
-        self.on_start_callbacks = runner_callbacks.get('on_start', [])
-        self.on_shutdown_callbacks = runner_callbacks.get('shutdown', [])
+        super(_ApplicationAdapter, self).__init__(
+            before_run=runner_callbacks.get('before_run', []),
+            on_start=runner_callbacks.get('on_start', []),
+            on_shutdown=runner_callbacks.get('shutdown', []))
 
+        self._application = application
+        self.settings = self.tornado_application.settings
         setattr(application, 'runner_callbacks',
                 {'before_run': self.before_run_callbacks,
                  'on_start': self.on_start_callbacks,
                  'shutdown': self.on_shutdown_callbacks})
 
-    def start(self, io_loop):
-        """
-        Run the ``before_run`` callbacks and queue to ``on_start`` callbacks.
-
-        :param tornado.ioloop.IOLoop io_loop: loop to start the app on.
-
-        """
-        for callback in self.before_run_callbacks:
-            try:
-                callback(self.tornado_application, io_loop)
-            except Exception:
-                self.logger.error('before_run callback %r cancelled start',
-                                  callback, exc_info=1)
-                self.stop(io_loop)
-                raise
-
-        for callback in self.on_start_callbacks:
-            io_loop.spawn_callback(callback, self.tornado_application, io_loop)
-
-    def stop(self, io_loop):
-        """
-        Asynchronously stop the application.
-
-        :param tornado.ioloop.IOLoop io_loop: loop to run until all
-            callbacks, timeouts, and queued calls are complete
-
-        Call this method to start the application shutdown process.
-        The IOLoop will be stopped once the application is completely
-        shut down.
-
-        """
-        running_async = False
-        shutdown = _ShutdownHandler(io_loop)
-        for callback in self.on_shutdown_callbacks:
-            try:
-                maybe_future = callback(self.tornado_application)
-                if concurrent.is_future(maybe_future):
-                    shutdown.add_future(maybe_future)
-                    running_async = True
-            except Exception as error:
-                self.logger.warning('exception raised from shutdown '
-                                    'callback %r, ignored: %s',
-                                    callback, error, exc_info=1)
-
-        if not running_async:
-            shutdown.on_shutdown_ready()
+    @property
+    def tornado_application(self):
+        return self._application
 
 
 def wrap_application(application, before_run, on_start, shutdown):
