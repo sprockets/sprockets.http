@@ -2,6 +2,11 @@
 
 Release History
 ===============
+`Next Release`_
+---------------
+- Remove support for pre-4.x Tornado.  I believe that this has been
+  broken since `1.2.0`_
+
 `1.4.0`_ (3 Nov 2016)
 ---------------------
 - Separate the concerns of running the application from the callback
