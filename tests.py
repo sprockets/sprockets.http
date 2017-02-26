@@ -18,6 +18,8 @@ from tornado import concurrent, httputil, ioloop, testing, web
 
 import sprockets.http.mixins
 import sprockets.http.runner
+import tornado
+
 import examples
 
 
@@ -108,10 +110,14 @@ class ErrorLoggerTests(testing.AsyncHTTPTestCase):
         self.assert_message_logged(
             logging.ERROR, 'failed with 500: {}', httputil.responses[500])
 
+    @unittest.skipIf(tornado.version_info[:2] == (4, 0),
+                     'send_error wuth custom status codes is broken in 4.0')
     def test_that_custom_status_codes_logged_as_unknown(self):
         self.fetch('/status/623')
         self.assert_message_logged(logging.ERROR, 'failed with 623: Unknown')
 
+    @unittest.skipIf(tornado.version_info[:2] == (4, 0),
+                     'send_error wuth custom status codes is broken in 4.0')
     def test_that_custom_reasons_are_supported(self):
         self.fetch('/status/456?reason=oops')
         self.assert_message_logged(logging.WARNING, 'failed with 456: oops')
@@ -193,6 +199,8 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
         body = self._decode_response(response)
         self.assertEqual(body['message'], httputil.responses[500])
 
+    @unittest.skipIf(tornado.version_info[:2] == (4, 0),
+                     'send_error wuth custom status codes is broken in 4.0')
     def test_that_error_json_reason_contains_unknown_in_some_cases(self):
         response = self.fetch('/status/567')
         self.assertEqual(response.code, 567)
