@@ -16,6 +16,7 @@ except ImportError:
 
 from tornado import concurrent, httputil, ioloop, testing, web
 
+import sprockets.http.app
 import sprockets.http.mixins
 import sprockets.http.runner
 import tornado
@@ -631,3 +632,33 @@ class RunCommandTests(MockHelper, unittest.TestCase):
         command.run()
 
         run_function.assert_called_once_with(result_closure['result'])
+
+
+class ApplicationTests(testing.AsyncHTTPTestCase):
+
+    def setUp(self):
+        self.ready_blocker = concurrent.Future()
+        super(ApplicationTests, self).setUp()
+
+    def get_app(self):
+
+        def on_startup(app, io_loop):
+            def on_ready(_):
+                app.ready_to_serve.set()
+            io_loop.add_future(self.ready_blocker, on_ready)
+
+        app = sprockets.http.app.Application(
+            [web.url(r'/(?P<status_code>\d+)', RaisingHandler)],
+            on_start=[on_startup])
+        app.start(self.io_loop)
+
+        return app
+
+    def test_that_application_503s_when_not_ready(self):
+        response = self.fetch('/400')
+        self.assertEqual(response.code, 503)
+
+    def test_that_application_processes_requests_when_ready(self):
+        self.ready_blocker.set_result(True)
+        response = self.fetch('/400')
+        self.assertEqual(response.code, 400)

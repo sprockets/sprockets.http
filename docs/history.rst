@@ -6,6 +6,7 @@ Release History
 ---------------
 - Remove support for pre-4.x Tornado.  I believe that this has been
   broken since `1.2.0`_
+- Added ready to serve flag to :class:`sprockets.http.app.Application`
 
 `1.4.0`_ (3 Nov 2016)
 ---------------------

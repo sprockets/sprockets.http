@@ -1,7 +1,11 @@
 import logging
 import sys
 
-from tornado import concurrent, web
+from tornado import concurrent, httputil, web
+try:
+    from tornado import locks
+except ImportError:  # pragma: no cover
+    import toro as locks
 
 
 class _ShutdownHandler(object):
@@ -48,6 +52,36 @@ class _ShutdownHandler(object):
             self.logger.info('stopped IOLoop')
 
 
+class _NotReadyDelegate(httputil.HTTPMessageDelegate):
+    """
+    Implementation of ``HTTPMessageDelegate`` that always fails.
+
+    :param tornado.httputil.HTTPConnection request_conn: the request
+        connection to send a response to.
+
+    This implementation of :class:`tornado.httputil.HTTPMessageDelegate`
+    always finishes a request by writing a :http:status:`503` response.
+    A new instance is created by :method:`.Application.start_request`
+    when the application is not ready yet.
+
+    """
+
+    def __init__(self, request_conn):
+        super(_NotReadyDelegate, self).__init__()
+        self.request_conn = request_conn
+
+    def finish(self):
+        def on_written(*args):
+            self.request_conn.finish()
+
+        response_line = httputil.ResponseStartLine('HTTP/1.0', 503,
+                                                   'Application Not Ready')
+        headers = httputil.HTTPHeaders({'Content-Length': '0'})
+        future = self.request_conn.write_headers(response_line, headers,
+                                                 callback=on_written)
+        return future
+
+
 class _Application(object):
 
     def __init__(self, *args, **kwargs):
@@ -61,9 +95,10 @@ class _Application(object):
         self.on_shutdown_callbacks.extend(kwargs.pop('on_shutdown', []))
 
         super(_Application, self).__init__(*args, **kwargs)
+        self.ready_to_serve = locks.Event()
 
     @property
-    def tornado_application(self):
+    def tornado_application(self):  # pragma: no cover
         """
         Return the :class:`tornado.web.Application` instance.
 
@@ -90,6 +125,8 @@ class _Application(object):
 
         for callback in self.on_start_callbacks:
             io_loop.spawn_callback(callback, self.tornado_application, io_loop)
+        if not self.on_start_callbacks:
+            self.ready_to_serve.set()
 
     def stop(self, io_loop):
         """
@@ -103,6 +140,7 @@ class _Application(object):
         shut down.
 
         """
+        self.ready_to_serve.clear()
         running_async = False
         shutdown = _ShutdownHandler(io_loop)
         for callback in self.on_shutdown_callbacks:
@@ -139,6 +177,12 @@ class Application(_Application, web.Application):
 
     Additional positional and keyword parameters are passed to the
     :class:`tornado.web.Application` initializer as-is.
+
+    .. attribute:: ready_to_serve
+
+       A flag that signals whether the application is ready to service
+       requests or not.  This is a :class:`tornado.locks.Event` instance
+       that needs to be set before the application will process a request.
 
     .. attribute:: before_run_callbacks
 
@@ -178,6 +222,32 @@ class Application(_Application, web.Application):
     @property
     def tornado_application(self):
         return self
+
+    def start_request(self, *args):
+        """
+        Extends ``start_request`` to handle "not ready" conditions.
+
+        :param server_conn: opaque representation of the low-level
+            TCP connection
+        :param tornado.httputil.HTTPConnection request_conn:
+            the connection associated with the new request
+        :rtype: tornado.httputil.HTTPMessageDelegate
+
+        If the :attr:`ready_to_serve` is not set, then an instance of
+        :class:`._NotReadyDelegate` is returned.  It will ensure that
+        the application responds with a 503.
+
+        """
+        if not self.ready_to_serve.is_set():
+            return _NotReadyDelegate(args[-1])
+        return super(Application, self).start_request(*args)
+
+    def __call__(self, request):
+        if not self.ready_to_serve.is_set():
+            handler = web.ErrorHandler(self, request, status_code=503)
+            handler._execute([])
+            return handler
+        return super(Application, self).__call__(request)
 
 
 class _ApplicationAdapter(_Application):
