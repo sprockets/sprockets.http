@@ -242,13 +242,6 @@ class Application(_Application, web.Application):
             return _NotReadyDelegate(args[-1])
         return super(Application, self).start_request(*args)
 
-    def __call__(self, request):
-        if not self.ready_to_serve.is_set():
-            handler = web.ErrorHandler(self, request, status_code=503)
-            handler._execute([])
-            return handler
-        return super(Application, self).__call__(request)
-
 
 class _ApplicationAdapter(_Application):
     """
