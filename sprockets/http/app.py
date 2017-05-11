@@ -1,7 +1,11 @@
 import logging
 import sys
 
-from tornado import concurrent, web
+from tornado import concurrent, httputil, web
+try:
+    from tornado import locks
+except ImportError:  # pragma: no cover
+    import toro as locks
 
 
 class _ShutdownHandler(object):
@@ -25,7 +29,7 @@ class _ShutdownHandler(object):
                 self.logger.exception('shutdown callback raised exception')
             else:
                 self.logger.warning('shutdown callback raised exception: %r',
-                                    exc_info=(None, future.exception(), None))
+                                    future.exception())
         else:
             self.logger.debug('shutdown future completed: %r, %d pending',
                               future.result(), self.pending_callbacks)
@@ -48,41 +52,60 @@ class _ShutdownHandler(object):
             self.logger.info('stopped IOLoop')
 
 
-class CallbackManager(object):
+class _NotReadyDelegate(httputil.HTTPMessageDelegate):
     """
-    Application state management.
+    Implementation of ``HTTPMessageDelegate`` that always fails.
 
-    This is where the core of the application wrapper actually lives.
-    It is responsible for managing and calling the various application
-    callbacks.  Sub-classes are responsible for gluing in the actual
-    :class:`tornado.web.Application` object and the
-    :mod:`sprockets.http.runner` module is responsible for starting up
-    the HTTP stack and calling the :meth:`.start` and :meth:`.stop`
-    methods.
+    :param tornado.httputil.HTTPConnection request_conn: the request
+        connection to send a response to.
 
-    .. attribute:: runner_callbacks
-
-       :class:`dict` of lists of callback functions to call at
-       certain points in the application lifecycle.  See
-       :attr:`.before_run_callbacks`, :attr:`.on_start_callbacks`,
-       and :attr:`on_shutdown_callbacks`.
-
-       .. deprecated:: 1.4
-
-          Use the property callbacks instead of this dictionary.  It
-          will be going away in a future release.
+    This implementation of :class:`tornado.httputil.HTTPMessageDelegate`
+    always finishes a request by writing a :http:status:`503` response.
+    A new instance is created by :method:`.Application.start_request`
+    when the application is not ready yet.
 
     """
 
-    def __init__(self, tornado_application, *args, **kwargs):
-        self.runner_callbacks = kwargs.pop('runner_callbacks', {})
-        super(CallbackManager, self).__init__(*args, **kwargs)
+    def __init__(self, request_conn):
+        super(_NotReadyDelegate, self).__init__()
+        self.request_conn = request_conn
 
-        self._tornado_application = tornado_application
+    def finish(self):
+        def on_written(*args):
+            self.request_conn.finish()
+
+        response_line = httputil.ResponseStartLine('HTTP/1.0', 503,
+                                                   'Application Not Ready')
+        headers = httputil.HTTPHeaders({'Content-Length': '0'})
+        future = self.request_conn.write_headers(response_line, headers,
+                                                 callback=on_written)
+        return future
+
+
+class _Application(object):
+
+    def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.runner_callbacks.setdefault('before_run', [])
-        self.runner_callbacks.setdefault('on_start', [])
-        self.runner_callbacks.setdefault('shutdown', [])
+        self.before_run_callbacks = []
+        self.on_start_callbacks = []
+        self.on_shutdown_callbacks = []
+
+        self.before_run_callbacks.extend(kwargs.pop('before_run', []))
+        self.on_start_callbacks.extend(kwargs.pop('on_start', []))
+        self.on_shutdown_callbacks.extend(kwargs.pop('on_shutdown', []))
+
+        super(_Application, self).__init__(*args, **kwargs)
+        self.ready_to_serve = locks.Event()
+
+    @property
+    def tornado_application(self):  # pragma: no cover
+        """
+        Return the :class:`tornado.web.Application` instance.
+
+        :rtype: tornado.web.Application
+
+        """
+        raise NotImplementedError
 
     def start(self, io_loop):
         """
@@ -102,6 +125,8 @@ class CallbackManager(object):
 
         for callback in self.on_start_callbacks:
             io_loop.spawn_callback(callback, self.tornado_application, io_loop)
+        if not self.on_start_callbacks:
+            self.ready_to_serve.set()
 
     def stop(self, io_loop):
         """
@@ -115,6 +140,7 @@ class CallbackManager(object):
         shut down.
 
         """
+        self.ready_to_serve.clear()
         running_async = False
         shutdown = _ShutdownHandler(io_loop)
         for callback in self.on_shutdown_callbacks:
@@ -125,80 +151,99 @@ class CallbackManager(object):
                     running_async = True
             except Exception as error:
                 self.logger.warning('exception raised from shutdown '
-                                    'callback %r, ignored: %s',
+                                    'callback %r ignored: %s',
                                     callback, error, exc_info=1)
 
         if not running_async:
             shutdown.on_shutdown_ready()
 
-    @property
-    def before_run_callbacks(self):
-        """
-        List of synchronous functions called before the IOLoop is started.
 
-        The *before_run* callbacks are called after the IOLoop is created
-        and before it is started.  The callbacks are run synchronously and
-        the application will exit if a callback raises an exception.
-
-        **Signature**: callback(application, io_loop)
-
-        """
-        return self.runner_callbacks['before_run']
-
-    @property
-    def on_start_callbacks(self):
-        """
-        List of asynchronous functions spawned before the IOLoop is started.
-
-        The *on_start* callbacks are spawned after the IOLoop is created
-        and before it is started.  The callbacks are run asynchronously
-        via :meth:`tornado.ioloop.IOLoop.spawn_callback` as soon as the
-        IOLoop is started.
-
-        **Signature**: callback(application, io_loop)
-
-        """
-        return self.runner_callbacks['on_start']
-
-    @property
-    def on_shutdown_callbacks(self):
-        """
-        List of functions when the application is shutting down.
-
-        The *on_shutdown* callbacks are called after the HTTP server has
-        been stopped.  If a callback returns a
-        :class:`tornado.concurrent.Future` instance, then the future is
-        added to the IOLoop.
-
-        **Signature**: callback(application)
-
-        """
-        return self.runner_callbacks['shutdown']
-
-    @property
-    def tornado_application(self):
-        """The underlying :class:`tornado.web.Application` instance."""
-        return self._tornado_application
-
-
-class Application(CallbackManager, web.Application):
+class Application(_Application, web.Application):
     """
     Callback-aware version of :class:`tornado.web.Application`.
 
     Using this class instead of the vanilla Tornado ``Application``
     class provides a clean way to customize application-level
-    constructs such as connection pools.
+    constructs such as connection pools.  You can customize your
+    application by sub-classing this class or simply passing
+    parameters.
 
-    Note that much of the functionality is implemented in
-    :class:`.CallbackManager`.
+    :keyword list before_run: optional kwarg that specifies a list of
+        callbacks to add to :attr:`.before_run_callbacks`
+    :keyword list on_start: optional kwarg that specifies a list of
+        callbacks to add to :attr:`.on_start_callbacks`
+    :keyword list on_shutdown: optional kwarg that specifies a list of
+        callbacks to add to :attr:`.on_shutdown_callbacks`
+
+    Additional positional and keyword parameters are passed to the
+    :class:`tornado.web.Application` initializer as-is.
+
+    .. attribute:: ready_to_serve
+
+       A flag that signals whether the application is ready to service
+       requests or not.  This is a :class:`tornado.locks.Event` instance
+       that needs to be set before the application will process a request.
+
+    .. attribute:: before_run_callbacks
+
+       The callbacks in this :class:`list` are called after tornado
+       forks sub-processes and after the IOLoop is created but before
+       it is started.  This means that callbacks can freely interact
+       with the ioloop.  The callbacks are run "in-line" and the
+       application will exit if a callback raises an exception.
+
+       **Signature**: ``callback(application, io_loop)``
+
+    .. attribute:: on_start_callbacks
+
+       The callbacks in this :class:`list` are spawned after the
+       callbacks in :attr:`before_run_callbacks` have completed and
+       before the IOLoop is started.  The callbacks are run asynchronously
+       by calling :meth:`tornado.ioloop.IOLoop.spawn_callback` which
+       schedules them to run as soon as the IOLoop is started.
+
+       **Signature**: ``callback(application, io_loop)``
+
+    .. attribute:: on_shutdown_callbacks
+
+       The callbacks in this :class:`list` are spawned after the
+       application receives a stop signal.  It first stops the HTTP
+       server.  Then it calls each callbacks in this list with the
+       running IOLoop as a parameter.  If the callback returns a
+       :class:`tornado.concurrent.Future` instance, then the future is
+       added to the IOLoop.
+
+       The IOLoop is stopped after all callbacks and timers are finished.
+
+       **Signature**: ``callback(application)``
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super(Application, self).__init__(self, *args, **kwargs)
+    @property
+    def tornado_application(self):
+        return self
+
+    def start_request(self, *args):
+        """
+        Extends ``start_request`` to handle "not ready" conditions.
+
+        :param server_conn: opaque representation of the low-level
+            TCP connection
+        :param tornado.httputil.HTTPConnection request_conn:
+            the connection associated with the new request
+        :rtype: tornado.httputil.HTTPMessageDelegate
+
+        If the :attr:`ready_to_serve` is not set, then an instance of
+        :class:`._NotReadyDelegate` is returned.  It will ensure that
+        the application responds with a 503.
+
+        """
+        if not self.ready_to_serve.is_set():
+            return _NotReadyDelegate(args[-1])
+        return super(Application, self).start_request(*args)
 
 
-class _ApplicationAdapter(CallbackManager):
+class _ApplicationAdapter(_Application):
     """
     Simple adapter for a :class:`tornado.web.Application` instance.
 
@@ -214,12 +259,22 @@ class _ApplicationAdapter(CallbackManager):
     """
 
     def __init__(self, application):
-        self._application = application
-        self.settings = self._application.settings
+        runner_callbacks = getattr(application, 'runner_callbacks', {})
         super(_ApplicationAdapter, self).__init__(
-            self._application,
-            runner_callbacks=getattr(application, 'runner_callbacks', {}))
-        setattr(self._application, 'runner_callbacks', self.runner_callbacks)
+            before_run=runner_callbacks.get('before_run', []),
+            on_start=runner_callbacks.get('on_start', []),
+            on_shutdown=runner_callbacks.get('shutdown', []))
+
+        self._application = application
+        self.settings = self.tornado_application.settings
+        setattr(application, 'runner_callbacks',
+                {'before_run': self.before_run_callbacks,
+                 'on_start': self.on_start_callbacks,
+                 'shutdown': self.on_shutdown_callbacks})
+
+    @property
+    def tornado_application(self):
+        return self._application
 
 
 def wrap_application(application, before_run, on_start, shutdown):
