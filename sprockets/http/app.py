@@ -29,7 +29,7 @@ class _ShutdownHandler(object):
                 self.logger.exception('shutdown callback raised exception')
             else:
                 self.logger.warning('shutdown callback raised exception: %r',
-                                    exc_info=(None, future.exception(), None))
+                                    future.exception())
         else:
             self.logger.debug('shutdown future completed: %r, %d pending',
                               future.result(), self.pending_callbacks)
