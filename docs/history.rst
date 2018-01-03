@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`1.4.1`_ (3 Jan 2018)
+---------------------
 - Workaround https://bitbucket.org/birkenfeld/sphinx-contrib/issues/184/
   by pinning sphinx in the development environment.
 
@@ -107,4 +107,5 @@ Release History
 .. _1.3.2: https://github.com/sprockets/sprockets.http/compare/1.3.1...1.3.2
 .. _1.3.3: https://github.com/sprockets/sprockets.http/compare/1.3.2...1.3.3
 .. _1.4.0: https://github.com/sprockets/sprockets.http/compare/1.3.3...1.4.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.4.0...master
+.. _1.4.1: https://github.com/sprockets/sprockets.http/compare/1.4.0...1.4.1
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.4.1...master
