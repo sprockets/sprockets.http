@@ -2,8 +2,14 @@
 
 Release History
 ===============
-`1.4.0`_ (3 Nov 2016)
----------------------
+
+`Next Release`_
+---------------
+- Workaround https://bitbucket.org/birkenfeld/sphinx-contrib/issues/184/
+  by pinning sphinx in the development environment.
+
+`1.4.0`_ (29 Sep 2017)
+----------------------
 - Separate the concerns of running the application from the callback
   chains.  The latter has been refactored into :mod:`sprockets.http.app`.
   This change is completely invisible to the outside world.
