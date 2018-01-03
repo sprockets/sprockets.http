@@ -5,10 +5,12 @@ python:
 - 3.5
 before_install:
 - pip install nose coverage codecov
-- pip install -r requires/testing.txt
+- pip install -r requires/development.txt
 install:
 - pip install -e .
-script: nosetests --with-coverage
+script:
+- nosetests --with-coverage
+- ./setup.py build_sphinx
 after_success:
 - codecov
 sudo: false
