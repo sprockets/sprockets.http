@@ -68,13 +68,23 @@ class Runner(object):
         going to run in a single-process mode; otherwise, we'll let
         tornado decide how many sub-processes to spawn.
 
+        The following additional configuration parameters can be set on the
+        ``httpserver.HTTPServer`` instance by setting them in the application
+        settings: ``xheaders``, ``max_body_size``, ``max_buffer_size``.
+
         """
         signal.signal(signal.SIGTERM, self._on_signal)
         signal.signal(signal.SIGINT, self._on_signal)
         xheaders = self.application.settings.get('xheaders', False)
+        max_body_size = self.application.settings.get('max_body_size', None)
+        max_buffer_size = self.application.settings.get('max_buffer_size',
+                                                        None)
 
         self.server = httpserver.HTTPServer(
-            self.application.tornado_application, xheaders=xheaders)
+            self.application.tornado_application,
+            xheaders=xheaders,
+            max_body_size=max_body_size,
+            max_buffer_size=max_buffer_size)
         if self.application.settings.get('debug', False):
             self.logger.info('starting 1 process on port %d', port_number)
             self.server.listen(port_number)
@@ -97,13 +107,17 @@ class Runner(object):
 
         If the application's ``debug`` setting is ``True``, then we are
         going to run in a single-process mode; otherwise, we'll let
-        tornado decide how many sub-processes to spawn.  In any case, the
-        applications *before_run* callbacks are invoked.  If a callback
-        raises an exception, then the application is terminated by calling
-        :func:`sys.exit`.
+        tornado decide how many sub-processes based on the value of the
+        ``number_of_procs`` argument.  In any case, the application's
+        *before_run* callbacks are invoked.  If a callback raises an exception,
+        then the application is terminated by calling :func:`sys.exit`.
 
         If any ``on_start`` callbacks are registered, they will be added to
         the Tornado IOLoop for execution after the IOLoop is started.
+
+        The following additional configuration parameters can be set on the
+        ``httpserver.HTTPServer`` instance by setting them in the application
+        settings: ``xheaders``, ``max_body_size``, ``max_buffer_size``.
 
         """
         self.start_server(port_number, number_of_procs)
