@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.4.2`_ (25 Jan 2018)
+---------------------
+- Allow max_body_size and max_buffer_size to be specified on the http server.
+
 `1.4.1`_ (3 Jan 2018)
 ---------------------
 - Workaround https://bitbucket.org/birkenfeld/sphinx-contrib/issues/184/
@@ -108,4 +112,5 @@ Release History
 .. _1.3.3: https://github.com/sprockets/sprockets.http/compare/1.3.2...1.3.3
 .. _1.4.0: https://github.com/sprockets/sprockets.http/compare/1.3.3...1.4.0
 .. _1.4.1: https://github.com/sprockets/sprockets.http/compare/1.4.0...1.4.1
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.4.1...master
+.. _1.4.2: https://github.com/sprockets/sprockets.http/compare/1.4.1...1.4.2
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.4.2...master
