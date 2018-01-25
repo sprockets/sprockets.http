@@ -369,7 +369,11 @@ class RunnerTests(MockHelper, unittest.TestCase):
     def setUp(self):
         super(RunnerTests, self).setUp()
         self.application = mock.Mock()
-        self.application.settings = {}
+        self.application.settings = {
+            'xheaders': True,
+            'max_body_size': 2048,
+            'max_buffer_size': 1024
+        }
         self.application.runner_callbacks = {}
 
         self.io_loop = mock.Mock()
@@ -380,13 +384,20 @@ class RunnerTests(MockHelper, unittest.TestCase):
         ioloop_module.IOLoop.instance.return_value = self.io_loop
 
         self.http_server = mock.Mock()
-        httpserver_module = self.start_mock('sprockets.http.runner.httpserver')
-        httpserver_module.HTTPServer.return_value = self.http_server
+        self.httpserver_module = \
+            self.start_mock('sprockets.http.runner.httpserver')
+        self.httpserver_module.HTTPServer.return_value = self.http_server
 
     def test_that_run_starts_ioloop(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8000)
         self.io_loop.start.assert_called_once_with()
+
+    def test_that_http_server_settings_are_used(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+        self.httpserver_module.HTTPServer.assert_called_once_with(
+            self.application, **self.application.settings)
 
     def test_that_production_run_starts_in_multiprocess_mode(self):
         runner = sprockets.http.runner.Runner(self.application)
