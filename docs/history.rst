@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Enable port reuse for Tornado versions newer than 4.3.
+
 `1.4.2`_ (25 Jan 2018)
 ---------------------
 - Allow max_body_size and max_buffer_size to be specified on the http server.

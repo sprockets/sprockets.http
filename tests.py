@@ -14,7 +14,8 @@ except ImportError:
     import mock
     open_name = '__builtin__.open'
 
-from tornado import concurrent, httputil, ioloop, testing, web
+from tornado import concurrent, httpserver, httputil, ioloop, testing, web
+import tornado
 
 import sprockets.http.mixins
 import sprockets.http.runner
@@ -383,7 +384,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         ioloop_module = self.start_mock('sprockets.http.runner.ioloop')
         ioloop_module.IOLoop.instance.return_value = self.io_loop
 
-        self.http_server = mock.Mock()
+        self.http_server = mock.Mock(spec=httpserver.HTTPServer)
         self.httpserver_module = \
             self.start_mock('sprockets.http.runner.httpserver')
         self.httpserver_module.HTTPServer.return_value = self.http_server
@@ -402,8 +403,23 @@ class RunnerTests(MockHelper, unittest.TestCase):
     def test_that_production_run_starts_in_multiprocess_mode(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8000)
-        self.http_server.bind.assert_called_once_with(8000)
+
+        self.assertTrue(self.http_server.bind.called)
+        args, kwargs = self.http_server.bind.call_args_list[0]
+        self.assertEqual(args, (8000, ))
+
         self.http_server.start.assert_called_once_with(0)
+
+    @unittest.skipUnless(tornado.version_info >= (4, 4),
+                         'port reuse requries newer tornado')
+    def test_that_production_enables_reuse_port(self):
+        runner = sprockets.http.runner.Runner(self.application)
+        runner.run(8000)
+
+        self.assertTrue(self.http_server.bind.called)
+        args, kwargs = self.http_server.bind.call_args_list[0]
+        self.assertEqual(args, (8000, ))
+        self.assertEqual(kwargs['reuse_port'], True)
 
     def test_that_debug_run_starts_in_singleprocess_mode(self):
         self.application.settings['debug'] = True
