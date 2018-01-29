@@ -476,7 +476,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
 
     def test_that_shutdown_stops_after_timelimit(self):
         def add_timeout(_, callback):
-            time.sleep(0.05)
+            time.sleep(0.1)
             callback()
         self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
 
