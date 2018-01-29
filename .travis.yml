@@ -10,7 +10,6 @@ install:
 - pip install -e .
 script:
 - nosetests --with-coverage
-- ./setup.py build_sphinx
 after_success:
 - codecov
 sudo: false
