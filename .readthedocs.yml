@@ -1,0 +1,8 @@
+---
+formats:  # only HTML & json
+  - none
+requirements_file: requires/development.txt
+build:
+  image: latest
+python:
+  version: 3

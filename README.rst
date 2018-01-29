@@ -1,5 +1,8 @@
 sprockets.http
 ==============
+
+|Version| |ReadTheDocs| |Travis| |Coverage|
+
 The goal of this library is to make it a little easier to develop great
 HTTP API services using the Tornado web framework.  It concentrates on
 running applications in a reliable & resilient manner and handling errors
@@ -235,3 +238,12 @@ the standard ``serve_traceback`` Tornado option is enabled.
 If the ``sprockets.mixins.mediatype.ContentMixin`` is also extended by your
 base class, ``write-error`` will use the ``ContentMixin.send_response`` method
 for choosing the appropriate response format and sending the error response.
+
+.. |Coverage| image:: https://codecov.io/github/sprockets/sprockets.http/coverage.svg?branch=master
+   :target: https://codecov.io/github/sprockets/sprockets.http
+.. |ReadTheDocs| image:: http://readthedocs.org/projects/sprocketshttp/badge/?version=master
+   :target: https://sprocketshttp.readthedocs.io/
+.. |Travis| image:: https://travis-ci.org/sprockets/sprockets.http.svg
+   :target: https://travis-ci.org/sprockets/sprockets.http
+.. |Version| image:: https://badge.fury.io/py/sprockets.http.svg
+   :target: https://pypi.python.org/pypi/sprockets.http/

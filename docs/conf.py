@@ -32,8 +32,6 @@ html_theme_options = {
     'github_repo': 'sprockets.http',
     'description': 'Tornado application runner',
     'github_banner': True,
-    'travis_button': True,
-    'codecov_button': True,
 }
 html_static_path = ['_static']
 
