@@ -131,7 +131,7 @@ class Runner(object):
 
         try:
             self.application.start(iol)
-        except:
+        except Exception:
             self.logger.exception('application terminated during start, '
                                   'exiting')
             sys.exit(70)
