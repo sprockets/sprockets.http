@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`1.5.0`_ (29 Jan 2018)
+----------------------
 - Enable port reuse for Tornado versions newer than 4.3.
 
 `1.4.2`_ (25 Jan 2018)
