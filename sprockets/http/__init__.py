@@ -2,11 +2,14 @@ import logging
 import logging.config
 import os
 
+from .app import Application
+
 
 version_info = (1, 5, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 __all__ = [
+    'Application',
     'run'
 ]
 
