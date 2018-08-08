@@ -2,6 +2,11 @@ import logging
 import sys
 
 from tornado import concurrent, web
+import tornado
+
+ASYNCIO_TORNADO = tornado.version_info[0] >= 5
+if ASYNCIO_TORNADO:
+    import asyncio
 
 
 class _ShutdownHandler(object):
@@ -40,12 +45,17 @@ class _ShutdownHandler(object):
 
     def _maybe_stop(self):
         now = self.io_loop.time()
-        if (now < self.__deadline and
-                (self.io_loop._callbacks or self.io_loop._timeouts)):
+        if now < self.__deadline and self._ioloop_has_tasks():
             self.io_loop.add_timeout(now + 1, self._maybe_stop)
         else:
             self.io_loop.stop()
             self.logger.info('stopped IOLoop')
+
+    def _ioloop_has_tasks(self):
+        if ASYNCIO_TORNADO:
+            return bool(asyncio.Task.all_tasks())
+        else:
+            return bool(self.io_loop._callbacks or self.io_loop._timeouts)
 
 
 class CallbackManager(object):
@@ -120,6 +130,10 @@ class CallbackManager(object):
         for callback in self.on_shutdown_callbacks:
             try:
                 maybe_future = callback(self.tornado_application)
+
+                if ASYNCIO_TORNADO and asyncio.iscoroutine(maybe_future):
+                        maybe_future = asyncio.create_task(maybe_future)
+
                 if concurrent.is_future(maybe_future):
                     shutdown.add_future(maybe_future)
                     running_async = True

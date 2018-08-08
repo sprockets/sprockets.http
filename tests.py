@@ -448,6 +448,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
             self.io_loop.add_callback_from_signal.assert_called_once_with(
                 runner._shutdown)
 
+    @unittest.skipUnless(tornado.version_info < (5,), '')
     def test_that_shutdown_waits_for_callbacks(self):
         def add_timeout(_, callback):
             self.io_loop._callbacks.pop()
@@ -461,6 +462,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.io_loop.stop.assert_called_once_with()
         self.assertEqual(self.io_loop.add_timeout.call_count, 2)
 
+    @unittest.skipUnless(tornado.version_info < (5,), '')
     def test_that_shutdown_waits_for_timeouts(self):
         def add_timeout(_, callback):
             self.io_loop._timeouts.pop()
