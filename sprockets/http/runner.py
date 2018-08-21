@@ -139,7 +139,6 @@ class Runner(object):
         iol.start()
 
     def _on_signal(self, signo, frame):
-        self.logger.info('signal %s received, stopping', signo)
         ioloop.IOLoop.instance().add_callback_from_signal(self._shutdown)
 
     def _shutdown(self):

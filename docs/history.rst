@@ -3,6 +3,14 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Remove logging from the signal handler.  Logger's cannot safely be used
+  from within signal handlers.  See `Thread Safety`_ in the logging module
+  documentation for details.
+
+.. _Thread Safety: https://docs.python.org/3/library/logging.html#thread-safety
+
 `1.5.0`_ (29 Jan 2018)
 ----------------------
 - Enable port reuse for Tornado versions newer than 4.3.
