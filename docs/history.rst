@@ -3,8 +3,11 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`2.0.0`_ (26 Nov 2018)
+----------------------
+- Remove support for <= Python 3.4
+- Remove support for <= Tornado 4.2
+- Address issue with using AsyncIO's IOLoop on shutdown
 - Remove logging from the signal handler.  Logger's cannot safely be used
   from within signal handlers.  See `Thread Safety`_ in the logging module
   documentation for details.

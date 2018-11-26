@@ -3,7 +3,7 @@ import logging.config
 import os
 
 
-version_info = (1, 5, 0)
+version_info = (2, 0, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 
