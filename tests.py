@@ -6,13 +6,9 @@ import os
 import json
 import time
 import unittest
+from unittest import mock
 
-try:
-    from unittest import mock
-    open_name = 'builtins.open'
-except ImportError:
-    import mock
-    open_name = '__builtin__.open'
+open_name = 'builtins.open'
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 import tornado
