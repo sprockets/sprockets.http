@@ -1,10 +1,9 @@
 language: python
+dist: xenial
 python:
-- 2.7
-- 3.4
 - 3.5
 - 3.6
-- 3.7-dev
+- 3.7
 before_install:
 - pip install codecov
 - pip install -r requires/testing.txt
@@ -22,6 +21,6 @@ deploy:
   password:
     secure: ARvFw5CHqQZqPOkJXxQSe7EAEbX1yt7FiBTtzz8Gd6XndbY10HVCSWhGYeldm9LevvQc9p77pBEvsl+bXGQbJ3NW/r/U5PADaFdmi4bxmXN8yc+dFKzn72MpZfL+kCV2T/HutuOY6dQa4okTkKVV+sqwPLKPhL69zH/PxQg8qe4=
   on:
-    python: 3.4
+    python: 3.7
     tags: true
     all_branches: true
