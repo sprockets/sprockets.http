@@ -16,7 +16,7 @@ from tornado import httpserver, ioloop
 import sprockets.http.app
 
 
-class Runner(object):
+class Runner:
     """
     HTTP service runner.
 

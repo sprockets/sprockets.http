@@ -17,7 +17,7 @@ def _get_http_reason(status_code):
     return httputil.responses.get(status_code, 'Unknown')
 
 
-class LoggingHandler(object):
+class LoggingHandler:
     """
     Add ``self.logger``.
 
@@ -37,7 +37,7 @@ class LoggingHandler(object):
             self.logger = logging.getLogger(self.__class__.__name__)
 
 
-class ErrorLogger(LoggingHandler, object):
+class ErrorLogger(LoggingHandler):
     """
     Log a message in ``send_error``.
 
@@ -74,7 +74,7 @@ class ErrorLogger(LoggingHandler, object):
         super(ErrorLogger, self).write_error(status_code, **kwargs)
 
 
-class ErrorWriter(object):
+class ErrorWriter:
     """
     Write error bodies out consistently.
 

@@ -5,7 +5,7 @@ import sys
 from tornado import concurrent, web
 
 
-class _ShutdownHandler(object):
+class _ShutdownHandler:
     """Keeps track of the application state during shutdown."""
 
     def __init__(self, io_loop):
@@ -48,7 +48,7 @@ class _ShutdownHandler(object):
             self.logger.info('stopped IOLoop')
 
 
-class CallbackManager(object):
+class CallbackManager:
     """
     Application state management.
 
