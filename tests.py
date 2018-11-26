@@ -1,3 +1,4 @@
+from unittest import mock
 import contextlib
 import distutils.dist
 import distutils.errors
@@ -6,13 +7,6 @@ import os
 import json
 import time
 import unittest
-
-try:
-    from unittest import mock
-    open_name = 'builtins.open'
-except ImportError:
-    import mock
-    open_name = '__builtin__.open'
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 
@@ -522,7 +516,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
             '# commented line',
             'SHOULD_BE=',
         ]))
-        self.start_mock(open_name, open_mock)
+        self.start_mock('builtins.open', open_mock)
 
         command = sprockets.http.runner.RunCommand(self.distribution)
         command.dry_run = True
@@ -548,7 +542,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
         os_module.path.exists.return_value = True
 
         open_mock = mock.mock_open(read_data='PORT=2')
-        self.start_mock(open_name, open_mock)
+        self.start_mock('builtins.open', open_mock)
 
         command = sprockets.http.runner.RunCommand(self.distribution)
         command.dry_run = True
