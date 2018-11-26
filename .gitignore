@@ -5,3 +5,5 @@ dist
 env
 *.egg-info
 .coverage
+.vscode
+.idea
