@@ -41,7 +41,8 @@ class _ShutdownHandler(object):
     def _maybe_stop(self):
         now = self.io_loop.time()
         if (now < self.__deadline and
-                (self.io_loop._callbacks or self.io_loop._timeouts)):
+                (getattr(self.io_loop, '_callbacks', None) or
+                 getattr(self.io_loop, 'self.io_loop._timeouts', None))):
             self.io_loop.add_timeout(now + 1, self._maybe_stop)
         else:
             self.io_loop.stop()
