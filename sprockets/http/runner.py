@@ -12,7 +12,6 @@ import signal
 import sys
 
 from tornado import httpserver, ioloop
-import tornado
 
 import sprockets.http.app
 
@@ -91,12 +90,7 @@ class Runner(object):
             self.server.listen(port_number)
         else:
             self.logger.info('starting processes on port %d', port_number)
-            if tornado.version_info >= (4, 4):
-                self.server.bind(port_number, reuse_port=True)
-            else:
-                self.logger.warning('port reuse disabled, please upgrade to'
-                                    'at least Tornado 4.4')
-                self.server.bind(port_number)
+            self.server.bind(port_number, reuse_port=True)
             self.server.start(number_of_procs)
 
     def stop_server(self):

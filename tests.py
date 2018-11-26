@@ -15,7 +15,6 @@ except ImportError:
     open_name = '__builtin__.open'
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
-import tornado
 
 import sprockets.http.mixins
 import sprockets.http.runner
@@ -410,8 +409,6 @@ class RunnerTests(MockHelper, unittest.TestCase):
 
         self.http_server.start.assert_called_once_with(0)
 
-    @unittest.skipUnless(tornado.version_info >= (4, 4),
-                         'port reuse requries newer tornado')
     def test_that_production_enables_reuse_port(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8000)
@@ -447,34 +444,6 @@ class RunnerTests(MockHelper, unittest.TestCase):
             runner._on_signal(signal_module.SIGINT, mock.Mock())
             self.io_loop.add_callback_from_signal.assert_called_once_with(
                 runner._shutdown)
-
-    @unittest.skipUnless(tornado.version_info < (5,), '')
-    def test_that_shutdown_waits_for_callbacks(self):
-        def add_timeout(_, callback):
-            self.io_loop._callbacks.pop()
-            callback()
-        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
-
-        self.io_loop._callbacks = [mock.Mock(), mock.Mock()]
-        runner = sprockets.http.runner.Runner(self.application)
-        runner.run(8000)
-        runner._shutdown()
-        self.io_loop.stop.assert_called_once_with()
-        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
-
-    @unittest.skipUnless(tornado.version_info < (5,), '')
-    def test_that_shutdown_waits_for_timeouts(self):
-        def add_timeout(_, callback):
-            self.io_loop._timeouts.pop()
-            callback()
-        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
-
-        self.io_loop._timeouts = [mock.Mock(), mock.Mock()]
-        runner = sprockets.http.runner.Runner(self.application)
-        runner.run(8000)
-        runner._shutdown()
-        self.io_loop.stop.assert_called_once_with()
-        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
 
     def test_that_shutdown_stops_after_timelimit(self):
         def add_timeout(_, callback):
