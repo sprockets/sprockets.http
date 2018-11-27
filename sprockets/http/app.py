@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import sys
 
 from tornado import concurrent, web
 
 
-class _ShutdownHandler(object):
+class _ShutdownHandler:
     """Keeps track of the application state during shutdown."""
 
     def __init__(self, io_loop):
@@ -40,15 +41,14 @@ class _ShutdownHandler(object):
 
     def _maybe_stop(self):
         now = self.io_loop.time()
-        if (now < self.__deadline and
-                (self.io_loop._callbacks or self.io_loop._timeouts)):
+        if now < self.__deadline and asyncio.Task.all_tasks():
             self.io_loop.add_timeout(now + 1, self._maybe_stop)
         else:
             self.io_loop.stop()
             self.logger.info('stopped IOLoop')
 
 
-class CallbackManager(object):
+class CallbackManager:
     """
     Application state management.
 
@@ -76,7 +76,7 @@ class CallbackManager(object):
 
     def __init__(self, tornado_application, *args, **kwargs):
         self.runner_callbacks = kwargs.pop('runner_callbacks', {})
-        super(CallbackManager, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._tornado_application = tornado_application
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -120,6 +120,10 @@ class CallbackManager(object):
         for callback in self.on_shutdown_callbacks:
             try:
                 maybe_future = callback(self.tornado_application)
+
+                if asyncio.iscoroutine(maybe_future):
+                    maybe_future = asyncio.create_task(maybe_future)
+
                 if concurrent.is_future(maybe_future):
                     shutdown.add_future(maybe_future)
                     running_async = True
@@ -195,7 +199,7 @@ class Application(CallbackManager, web.Application):
     """
 
     def __init__(self, *args, **kwargs):
-        super(Application, self).__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
 
 class _ApplicationAdapter(CallbackManager):
@@ -216,7 +220,7 @@ class _ApplicationAdapter(CallbackManager):
     def __init__(self, application):
         self._application = application
         self.settings = self._application.settings
-        super(_ApplicationAdapter, self).__init__(
+        super().__init__(
             self._application,
             runner_callbacks=getattr(application, 'runner_callbacks', {}))
         setattr(self._application, 'runner_callbacks', self.runner_callbacks)

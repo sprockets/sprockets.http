@@ -125,4 +125,5 @@ Release History
 .. _1.4.0: https://github.com/sprockets/sprockets.http/compare/1.3.3...1.4.0
 .. _1.4.1: https://github.com/sprockets/sprockets.http/compare/1.4.0...1.4.1
 .. _1.4.2: https://github.com/sprockets/sprockets.http/compare/1.4.1...1.4.2
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.4.2...master
+.. _1.5.0: https://github.com/sprockets/sprockets.http/compare/1.4.2...1.5.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.5.0...master

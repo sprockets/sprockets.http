@@ -43,7 +43,7 @@ when the application starts.
          handlers = [
             # insert your handlers here
          ]
-         super(Application, self).__init__(handlers, *args, **kwargs)
+         super().__init__(handlers, *args, **kwargs)
          self.ready_to_serve = locks.Event()
          self.ready_to_serve.clear()
          self.on_start_callbacks.append(self._connect_to_database)
@@ -72,7 +72,7 @@ the event:
    class StatusHandler(web.RequestHandler):
       @gen.coroutine
       def prepare(self):
-         maybe_future = super(StatusHandler, self).prepare()
+         maybe_future = super().prepare()
          if concurrent.is_future(maybe_future):
             yield maybe_future
          if not self._finished and not self.application.ready_to_serve.is_set():
@@ -144,7 +144,7 @@ written the following instead:
 
    class MyHandler(web.RequestHandler):
       def initialize(self):
-         super(MyHandler, self).initialize()
+         super().initialize()
          self.logger = logging.getLogger('MyHandler')
 
       def get(self):

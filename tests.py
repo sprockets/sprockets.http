@@ -1,3 +1,4 @@
+from unittest import mock
 import contextlib
 import distutils.dist
 import distutils.errors
@@ -7,15 +8,7 @@ import json
 import time
 import unittest
 
-try:
-    from unittest import mock
-    open_name = 'builtins.open'
-except ImportError:
-    import mock
-    open_name = '__builtin__.open'
-
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
-import tornado
 
 import sprockets.http.mixins
 import sprockets.http.runner
@@ -25,7 +18,7 @@ import examples
 class RecordingHandler(logging.Handler):
 
     def __init__(self):
-        super(RecordingHandler, self).__init__()
+        super().__init__()
         self.emitted = []
 
     def emit(self, record):
@@ -44,11 +37,11 @@ class RaisingHandler(sprockets.http.mixins.ErrorLogger,
 class MockHelper(unittest.TestCase):
 
     def setUp(self):
-        super(MockHelper, self).setUp()
+        super().setUp()
         self._mocks = []
 
     def tearDown(self):
-        super(MockHelper, self).tearDown()
+        super().tearDown()
         for mocker in self._mocks:
             mocker.stop()
         del self._mocks[:]
@@ -76,13 +69,13 @@ def override_environment_variable(name, value):
 class ErrorLoggerTests(testing.AsyncHTTPTestCase):
 
     def setUp(self):
-        super(ErrorLoggerTests, self).setUp()
+        super().setUp()
         self.recorder = RecordingHandler()
         root_logger = logging.getLogger()
         root_logger.addHandler(self.recorder)
 
     def tearDown(self):
-        super(ErrorLoggerTests, self).tearDown()
+        super().tearDown()
         logging.getLogger().removeHandler(self.recorder)
 
     def get_app(self):
@@ -136,7 +129,7 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 
     def setUp(self):
         self._application = None
-        super(ErrorWriterTests, self).setUp()
+        super().setUp()
 
     @property
     def application(self):
@@ -226,7 +219,7 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 class RunTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunTests, self).setUp()
+        super().setUp()
         self.runner_cls = self.start_mock('sprockets.http.runner.Runner')
         self.get_logging_config = self.start_mock(
             'sprockets.http._get_logging_config')
@@ -300,7 +293,7 @@ class RunTests(MockHelper, unittest.TestCase):
 class CallbackTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(CallbackTests, self).setUp()
+        super().setUp()
         self.shutdown_callback = mock.Mock()
         self.before_run_callback = mock.Mock()
         self.application = self.make_application()
@@ -368,7 +361,7 @@ class CallbackTests(MockHelper, unittest.TestCase):
 class RunnerTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunnerTests, self).setUp()
+        super().setUp()
         self.application = mock.Mock()
         self.application.settings = {
             'xheaders': True,
@@ -410,8 +403,6 @@ class RunnerTests(MockHelper, unittest.TestCase):
 
         self.http_server.start.assert_called_once_with(0)
 
-    @unittest.skipUnless(tornado.version_info >= (4, 4),
-                         'port reuse requries newer tornado')
     def test_that_production_enables_reuse_port(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8000)
@@ -447,32 +438,6 @@ class RunnerTests(MockHelper, unittest.TestCase):
             runner._on_signal(signal_module.SIGINT, mock.Mock())
             self.io_loop.add_callback_from_signal.assert_called_once_with(
                 runner._shutdown)
-
-    def test_that_shutdown_waits_for_callbacks(self):
-        def add_timeout(_, callback):
-            self.io_loop._callbacks.pop()
-            callback()
-        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
-
-        self.io_loop._callbacks = [mock.Mock(), mock.Mock()]
-        runner = sprockets.http.runner.Runner(self.application)
-        runner.run(8000)
-        runner._shutdown()
-        self.io_loop.stop.assert_called_once_with()
-        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
-
-    def test_that_shutdown_waits_for_timeouts(self):
-        def add_timeout(_, callback):
-            self.io_loop._timeouts.pop()
-            callback()
-        self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
-
-        self.io_loop._timeouts = [mock.Mock(), mock.Mock()]
-        runner = sprockets.http.runner.Runner(self.application)
-        runner.run(8000)
-        runner._shutdown()
-        self.io_loop.stop.assert_called_once_with()
-        self.assertEqual(self.io_loop.add_timeout.call_count, 2)
 
     def test_that_shutdown_stops_after_timelimit(self):
         def add_timeout(_, callback):
@@ -533,7 +498,7 @@ class AsyncRunTests(unittest.TestCase):
 class RunCommandTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunCommandTests, self).setUp()
+        super().setUp()
         self.distribution = mock.Mock(spec=distutils.dist.Distribution,
                                       verbose=3)
 
@@ -551,7 +516,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
             '# commented line',
             'SHOULD_BE=',
         ]))
-        self.start_mock(open_name, open_mock)
+        self.start_mock('builtins.open', open_mock)
 
         command = sprockets.http.runner.RunCommand(self.distribution)
         command.dry_run = True
@@ -577,7 +542,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
         os_module.path.exists.return_value = True
 
         open_mock = mock.mock_open(read_data='PORT=2')
-        self.start_mock(open_name, open_mock)
+        self.start_mock('builtins.open', open_mock)
 
         command = sprockets.http.runner.RunCommand(self.distribution)
         command.dry_run = True

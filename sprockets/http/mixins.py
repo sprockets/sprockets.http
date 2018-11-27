@@ -17,7 +17,7 @@ def _get_http_reason(status_code):
     return httputil.responses.get(status_code, 'Unknown')
 
 
-class LoggingHandler(object):
+class LoggingHandler:
     """
     Add ``self.logger``.
 
@@ -32,12 +32,12 @@ class LoggingHandler(object):
     """
 
     def initialize(self):
-        super(LoggingHandler, self).initialize()
+        super().initialize()
         if not hasattr(self, 'logger'):
             self.logger = logging.getLogger(self.__class__.__name__)
 
 
-class ErrorLogger(LoggingHandler, object):
+class ErrorLogger(LoggingHandler):
     """
     Log a message in ``send_error``.
 
@@ -58,7 +58,7 @@ class ErrorLogger(LoggingHandler, object):
             else:
                 # Oh, and make non-standard HTTP status codes NOT explode!
                 kwargs['reason'] = _get_http_reason(status_code)
-        super(ErrorLogger, self).send_error(status_code, **kwargs)
+        super().send_error(status_code, **kwargs)
 
     def write_error(self, status_code, **kwargs):
         log_function = self.logger.debug
@@ -71,10 +71,10 @@ class ErrorLogger(LoggingHandler, object):
         log_function('%s %s failed with %s: %s', self.request.method,
                      self.request.uri, status_code,
                      kwargs.get('log_message', kwargs['reason']))
-        super(ErrorLogger, self).write_error(status_code, **kwargs)
+        super().write_error(status_code, **kwargs)
 
 
-class ErrorWriter(object):
+class ErrorWriter:
     """
     Write error bodies out consistently.
 
