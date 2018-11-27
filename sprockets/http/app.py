@@ -76,7 +76,7 @@ class CallbackManager:
 
     def __init__(self, tornado_application, *args, **kwargs):
         self.runner_callbacks = kwargs.pop('runner_callbacks', {})
-        super(CallbackManager, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self._tornado_application = tornado_application
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -199,7 +199,7 @@ class Application(CallbackManager, web.Application):
     """
 
     def __init__(self, *args, **kwargs):
-        super(Application, self).__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
 
 class _ApplicationAdapter(CallbackManager):
@@ -220,7 +220,7 @@ class _ApplicationAdapter(CallbackManager):
     def __init__(self, application):
         self._application = application
         self.settings = self._application.settings
-        super(_ApplicationAdapter, self).__init__(
+        super().__init__(
             self._application,
             runner_callbacks=getattr(application, 'runner_callbacks', {}))
         setattr(self._application, 'runner_callbacks', self.runner_callbacks)

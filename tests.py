@@ -18,7 +18,7 @@ import examples
 class RecordingHandler(logging.Handler):
 
     def __init__(self):
-        super(RecordingHandler, self).__init__()
+        super().__init__()
         self.emitted = []
 
     def emit(self, record):
@@ -37,11 +37,11 @@ class RaisingHandler(sprockets.http.mixins.ErrorLogger,
 class MockHelper(unittest.TestCase):
 
     def setUp(self):
-        super(MockHelper, self).setUp()
+        super().setUp()
         self._mocks = []
 
     def tearDown(self):
-        super(MockHelper, self).tearDown()
+        super().tearDown()
         for mocker in self._mocks:
             mocker.stop()
         del self._mocks[:]
@@ -69,13 +69,13 @@ def override_environment_variable(name, value):
 class ErrorLoggerTests(testing.AsyncHTTPTestCase):
 
     def setUp(self):
-        super(ErrorLoggerTests, self).setUp()
+        super().setUp()
         self.recorder = RecordingHandler()
         root_logger = logging.getLogger()
         root_logger.addHandler(self.recorder)
 
     def tearDown(self):
-        super(ErrorLoggerTests, self).tearDown()
+        super().tearDown()
         logging.getLogger().removeHandler(self.recorder)
 
     def get_app(self):
@@ -129,7 +129,7 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 
     def setUp(self):
         self._application = None
-        super(ErrorWriterTests, self).setUp()
+        super().setUp()
 
     @property
     def application(self):
@@ -219,7 +219,7 @@ class ErrorWriterTests(testing.AsyncHTTPTestCase):
 class RunTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunTests, self).setUp()
+        super().setUp()
         self.runner_cls = self.start_mock('sprockets.http.runner.Runner')
         self.get_logging_config = self.start_mock(
             'sprockets.http._get_logging_config')
@@ -293,7 +293,7 @@ class RunTests(MockHelper, unittest.TestCase):
 class CallbackTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(CallbackTests, self).setUp()
+        super().setUp()
         self.shutdown_callback = mock.Mock()
         self.before_run_callback = mock.Mock()
         self.application = self.make_application()
@@ -361,7 +361,7 @@ class CallbackTests(MockHelper, unittest.TestCase):
 class RunnerTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunnerTests, self).setUp()
+        super().setUp()
         self.application = mock.Mock()
         self.application.settings = {
             'xheaders': True,
@@ -498,7 +498,7 @@ class AsyncRunTests(unittest.TestCase):
 class RunCommandTests(MockHelper, unittest.TestCase):
 
     def setUp(self):
-        super(RunCommandTests, self).setUp()
+        super().setUp()
         self.distribution = mock.Mock(spec=distutils.dist.Distribution,
                                       verbose=3)
 

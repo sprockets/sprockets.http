@@ -31,7 +31,7 @@ class Application(app.Application):
 
     def __init__(self, **kwargs):
         kwargs['debug'] = True
-        super(Application, self).__init__(
+        super().__init__(
             [web.url(r'/status/(?P<status_code>\d+)', StatusHandler)],
             **kwargs)
 

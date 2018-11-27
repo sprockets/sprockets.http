@@ -54,7 +54,7 @@ class instead of writing a ``make_app`` function:
            handlers = [
                # insert your handlers
            ]
-           super(Application, self).__init__(handlers, *args, **kwargs)
+           super().__init__(handlers, *args, **kwargs)
 
    if __name__ == '__main__':
        sprockets.http.run(Application)
