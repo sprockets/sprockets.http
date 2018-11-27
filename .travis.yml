@@ -4,13 +4,11 @@ python:
 - 3.5
 - 3.6
 - 3.7
-before_install:
-- pip install codecov
-- pip install -r requires/testing.txt
 install:
-- pip install -e .
+- pip install -r requires/development.txt codecov
 script:
 - nosetests --with-coverage
+- python setup.py build_sphinx
 after_success:
 - codecov
 sudo: false
