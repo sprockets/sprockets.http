@@ -5,6 +5,12 @@ Release History
 
 `Next Release`_
 ---------------
+
+`2.0.0`_ (27 Nov 2018)
+----------------------
+- Add support for Tornado 5.0
+- Drop support for Tornado versions earlier than 5.0
+- Drop support for Python versions earlier than 3.5
 - Remove logging from the signal handler.  Logger's cannot safely be used
   from within signal handlers.  See `Thread Safety`_ in the logging module
   documentation for details.
@@ -126,4 +132,5 @@ Release History
 .. _1.4.1: https://github.com/sprockets/sprockets.http/compare/1.4.0...1.4.1
 .. _1.4.2: https://github.com/sprockets/sprockets.http/compare/1.4.1...1.4.2
 .. _1.5.0: https://github.com/sprockets/sprockets.http/compare/1.4.2...1.5.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.5.0...master
+.. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.5.0...2.0.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.0...master
