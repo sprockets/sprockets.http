@@ -9,6 +9,7 @@ install:
 script:
 - nosetests --with-coverage
 - python setup.py build_sphinx
+- flake8
 after_success:
 - codecov
 sudo: false
