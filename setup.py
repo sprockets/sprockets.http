@@ -1,31 +1,24 @@
 #!/usr/bin/env python
 #
 
-import os.path
+import pathlib
 
 import setuptools
 
 from sprockets import http
 
 
-def read_requirements(filename):
+def read_requirements(name):
     requirements = []
-    try:
-        with open(os.path.join('requires', filename)) as req_file:
-            for line in req_file:
-                if '#' in line:
-                    line = line[:line.index('#')]
-                line = line.strip()
-                if line.startswith('-'):
-                    pass
-                requirements.append(line)
-    except IOError:
-        pass
+    for line in pathlib.Path('requires', name).read_text().split('\n'):
+        if '#' in line:
+            line = line[:line.index('#')]
+        line = line.strip()
+        if line.startswith('-'):
+            pass
+        requirements.append(line)
     return requirements
 
-
-requirements = read_requirements('installation.txt')
-tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.http',
@@ -34,7 +27,7 @@ setuptools.setup(
     author='AWeber Communications',
     author_email='api@aweber.com',
     url='https://github.com/sprockets/sprockets.http',
-    install_requires=requirements,
+    install_requires=read_requirements('installation.txt'),
     license='BSD',
     namespace_packages=['sprockets'],
     packages=setuptools.find_packages(),
@@ -57,7 +50,7 @@ setuptools.setup(
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'],
     test_suite='nose.collector',
-    tests_require=tests_require,
+    tests_require=read_requirements('testing.txt'),
     python_requires='>=3.5',
     zip_safe=True,
 )
