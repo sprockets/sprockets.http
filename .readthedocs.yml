@@ -1,8 +1,9 @@
 ---
 formats:  # only HTML & json
   - none
-requirements_file: requires/development.txt
+requirements_file: requires/docs.txt
 build:
   image: latest
 python:
+  pip_install: true
   version: 3
