@@ -6,6 +6,10 @@ Release History
 `Next Release`_
 ---------------
 
+`2.0.1`_ (5 Mar 2019)
+----------------------
+- Include Tornado 6 in pin
+
 `2.0.0`_ (27 Nov 2018)
 ----------------------
 - Add support for Tornado 5.0
@@ -133,4 +137,5 @@ Release History
 .. _1.4.2: https://github.com/sprockets/sprockets.http/compare/1.4.1...1.4.2
 .. _1.5.0: https://github.com/sprockets/sprockets.http/compare/1.4.2...1.5.0
 .. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.5.0...2.0.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.0...master
+.. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.1...master
