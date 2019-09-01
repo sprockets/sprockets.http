@@ -8,11 +8,12 @@ from tornado import concurrent, web
 class _ShutdownHandler:
     """Keeps track of the application state during shutdown."""
 
-    def __init__(self, io_loop):
+    def __init__(self, io_loop, shutdown_limit, wait_timeout):
         self.io_loop = io_loop
         self.logger = logging.getLogger(self.__class__.__name__)
         self.pending_callbacks = 0
-        self.shutdown_limit = 5
+        self.shutdown_limit = shutdown_limit
+        self.wait_timeout = wait_timeout
         self.__deadline = None
 
     def add_future(self, future):
@@ -42,7 +43,7 @@ class _ShutdownHandler:
     def _maybe_stop(self):
         now = self.io_loop.time()
         if now < self.__deadline and asyncio.Task.all_tasks():
-            self.io_loop.add_timeout(now + 1, self._maybe_stop)
+            self.io_loop.add_timeout(now + self.wait_timeout, self._maybe_stop)
         else:
             self.io_loop.stop()
             self.logger.info('stopped IOLoop')
@@ -103,20 +104,24 @@ class CallbackManager:
         for callback in self.on_start_callbacks:
             io_loop.spawn_callback(callback, self.tornado_application, io_loop)
 
-    def stop(self, io_loop):
+    def stop(self, io_loop, shutdown_limit=5.0, wait_timeout=1.0):
         """
         Asynchronously stop the application.
 
         :param tornado.ioloop.IOLoop io_loop: loop to run until all
             callbacks, timeouts, and queued calls are complete
+        :param float shutdown_limit: maximum number of seconds to wait
+            before terminating
+        :param float wait_timeout: number of seconds to wait between checks
+            for pending callbacks & timers
 
         Call this method to start the application shutdown process.
         The IOLoop will be stopped once the application is completely
-        shut down.
+        shut down or after `shutdown_limit` seconds.
 
         """
         running_async = False
-        shutdown = _ShutdownHandler(io_loop)
+        shutdown = _ShutdownHandler(io_loop, shutdown_limit, wait_timeout)
         for callback in self.on_shutdown_callbacks:
             try:
                 maybe_future = callback(self.tornado_application)

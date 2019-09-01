@@ -5,6 +5,7 @@ Release History
 
 `Next Release`_
 ---------------
+- Make shutdown timings configurable.
 
 `2.0.1`_ (5 Mar 2019)
 ----------------------

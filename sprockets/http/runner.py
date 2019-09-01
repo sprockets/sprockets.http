@@ -55,6 +55,8 @@ class Runner:
             app, before_run, on_start, shutdown)
         self.logger = logging.getLogger('Runner')
         self.server = None
+        self.shutdown_limit = 5.0
+        self.wait_timeout = 1.0
 
     def start_server(self, port_number, number_of_procs=0):
         """
@@ -142,7 +144,8 @@ class Runner:
         self.stop_server()
 
         # Start the application shutdown process
-        self.application.stop(ioloop.IOLoop.instance())
+        self.application.stop(ioloop.IOLoop.instance(), self.shutdown_limit,
+                              self.wait_timeout)
 
 
 class RunCommand(cmd.Command):

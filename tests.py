@@ -448,6 +448,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.io_loop._timeouts = [mock.Mock()]
         runner = sprockets.http.runner.Runner(self.application)
         runner.shutdown_limit = 0.25
+        runner.wait_timeout = 0.05
         runner.run(8000)
         runner._shutdown()
         self.io_loop.stop.assert_called_once_with()
