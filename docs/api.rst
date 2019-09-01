@@ -113,6 +113,17 @@ raised by the callbacks are simply logged.
 
 .. seealso:: :attr:`~sprockets.http.app.CallbackManager.on_shutdown_callbacks`
 
+Testing your Application
+------------------------
+The :class:`~sprockets.http.testing.SprocketsHttpTestCase` class makes
+it simple to test sprockets.http based applications.  It knows how to
+call the appropriate callbacks at the appropriate time.  Use this as a
+base class in place of :class:`~tornado.testing.AsyncHTTPTestCase` and
+modify your ``get_app`` method to set ``self.app``.
+
+.. autoclass:: sprockets.http.testing.SprocketsHttpTestCase
+   :members:
+
 Response Logging
 ----------------
 Version 0.5.0 introduced the :mod:`sprockets.http.mixins` module with
@@ -176,6 +187,7 @@ If :class:`~sprockets.mixins.mediatype.ContentMixin` is being used as well,
 ``write_error`` will use
 :meth:`~sprockets.mixins.mediatype.ContentMixin.send_response` to send the
 document, otherwise it is sent as JSON.
+
 
 .. autoclass:: sprockets.http.mixins.ErrorWriter
    :members:

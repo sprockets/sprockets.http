@@ -12,6 +12,7 @@ from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 
 import sprockets.http.mixins
 import sprockets.http.runner
+import sprockets.http.testing
 import examples
 
 
@@ -616,3 +617,28 @@ class RunCommandTests(MockHelper, unittest.TestCase):
         command.run()
 
         run_function.assert_called_once_with(result_closure['result'])
+
+
+class TestCaseTests(unittest.TestCase):
+
+    class FakeTest(sprockets.http.testing.SprocketsHttpTestCase):
+        def get_app(self):
+            self.app = mock.Mock()
+            return self.app
+
+        def runTest(self):
+            pass
+
+    def test_that_setup_calls_start(self):
+        test_case = self.FakeTest()
+        test_case.setUp()
+        test_case.app.start.assert_called_once_with(test_case.io_loop)
+
+    def test_that_teardown_calls_stop(self):
+        test_case = self.FakeTest()
+        test_case.setUp()
+        test_case.io_loop = mock.Mock()
+        test_case.tearDown()
+        test_case.app.stop.assert_called_once_with(
+            test_case.io_loop, test_case.shutdown_limit,
+            test_case.wait_timeout)
