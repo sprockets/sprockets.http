@@ -1,5 +1,7 @@
+div.body { max-width: 85% }
+div.document { width: 90% }
 h1.logo {font-size:inherit}
 th.field-name {hyphens: manual; -webkit-hyphens: none}
-dl.class dt {padding-left: 5em; padding-right: 5em; text-indent: -5em}
-dl.function dt {padding-left: 5em; padding-right: 5em; text-indent: -5em}
+dl.class>dt {text-indent: -45px; padding-left: 45px}
+dl.function dt {text-indent: -45px; padding-left: 45px}
 div.seealso {background-color: initial; border: initial}

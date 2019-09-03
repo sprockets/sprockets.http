@@ -5,6 +5,8 @@ Release History
 
 `Next Release`_
 ---------------
+- Make shutdown timings configurable.
+- Add :class:`sprockets.http.testing.SprocketsHttpTestCase`.
 
 `2.0.1`_ (5 Mar 2019)
 ----------------------
