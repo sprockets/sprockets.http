@@ -1,4 +1,5 @@
 from unittest import mock
+import asyncio
 import contextlib
 import distutils.dist
 import distutils.errors
@@ -11,6 +12,7 @@ import uuid
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 
+import sprockets.http.app
 import sprockets.http.mixins
 import sprockets.http.runner
 import sprockets.http.testing
@@ -684,3 +686,78 @@ class LoggingConfigurationTests(unittest.TestCase):
         fmt_name = list(config['formatters'].keys())[0]
         self.assertIn('service="service" environment="whatever"',
                       config['formatters'][fmt_name]['format'])
+
+
+class ShutdownHandlerTests(unittest.TestCase):
+    def setUp(self):
+        super(ShutdownHandlerTests, self).setUp()
+        self.io_loop = ioloop.IOLoop.current()
+
+    def test_that_on_future_complete_logs_exceptions_from_future(self):
+        future = concurrent.Future()
+        future.set_exception(Exception('Injected Failure'))
+        handler = sprockets.http.app._ShutdownHandler(self.io_loop, 0.2, 0.05)
+        with self.assertLogs(handler.logger, 'WARNING') as cm:
+            handler.on_shutdown_future_complete(future)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn('Injected Failure', cm.output[0])
+
+    def test_that_on_future_complete_logs_active_exceptions(self):
+        future = concurrent.Future()
+        future.set_exception(Exception('Injected Failure'))
+        handler = sprockets.http.app._ShutdownHandler(self.io_loop, 0.2, 0.05)
+        with self.assertLogs(handler.logger, 'WARNING') as cm:
+            try:
+                future.result()
+            except Exception:
+                handler.on_shutdown_future_complete(future)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn('Injected Failure', cm.output[0])
+
+    def test_that_maybe_stop_retries_until_tasks_are_complete(self):
+        async def f():
+            pass
+
+        fake_loop = unittest.mock.Mock()
+        fake_loop.time.return_value = 10
+
+        loop = asyncio.get_event_loop()
+        tasks = [loop.create_task(f()) for _ in range(5)]
+
+        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
+        handler.on_shutdown_ready()  # sets __deadline to 15
+        fake_loop.add_timeout.reset_mock()
+
+        while tasks:
+            task = tasks.pop()
+            handler._maybe_stop()
+            fake_loop.add_timeout.assert_called_once_with(
+                unittest.mock.ANY, handler._maybe_stop)
+            fake_loop.add_timeout.reset_mock()
+            loop.run_until_complete(task)
+            del task
+
+        handler._maybe_stop()
+        fake_loop.stop.assert_called_once_with()
+
+    def test_that_maybe_stop_terminates_when_deadline_reached(self):
+        fake_loop = unittest.mock.Mock()
+        fake_loop.time.return_value = 10
+
+        loop = asyncio.get_event_loop()
+        loop.create_task(asyncio.sleep(10))
+
+        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
+        handler.on_shutdown_ready()  # sets __deadline to 15
+        fake_loop.add_timeout.reset_mock()
+
+        while fake_loop.time.return_value < 15:
+            handler._maybe_stop()
+            fake_loop.add_timeout.assert_called_once_with(
+                unittest.mock.ANY, handler._maybe_stop)
+            fake_loop.add_timeout.reset_mock()
+            fake_loop.time.return_value += 1
+
+        handler._maybe_stop()
+        fake_loop.stop.assert_called_once_with()
+        self.assertEqual(len(asyncio.Task.all_tasks(loop)), 1)
