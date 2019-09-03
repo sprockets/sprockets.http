@@ -7,6 +7,8 @@ Release History
 ---------------
 - Make shutdown timings configurable.
 - Add :class:`sprockets.http.testing.SprocketsHttpTestCase`.
+- Deprecate calling :func:`sprockets.http.run` without a specified
+  logging configuration.
 
 `2.0.1`_ (5 Mar 2019)
 ----------------------

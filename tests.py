@@ -9,6 +9,7 @@ import json
 import time
 import unittest
 import uuid
+import warnings
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 
@@ -295,6 +296,14 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
         self.logging_dict_config.assert_called_once_with(
             mock.sentinel.config)
+
+    def test_that_not_specifying_logging_config_is_deprecated(self):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            sprockets.http.run(mock.Mock())
+
+        self.assertEqual(len(captured), 1)
+        self.assertTrue(issubclass(captured[0].category, DeprecationWarning))
 
 
 class CallbackTests(MockHelper, unittest.TestCase):
