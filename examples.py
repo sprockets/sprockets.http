@@ -1,6 +1,7 @@
 from tornado import web
 
-from sprockets.http import app, mixins, run
+from sprockets.http import app, mixins
+import sprockets.http
 
 
 class StatusHandler(mixins.ErrorLogger, mixins.ErrorWriter,
@@ -37,4 +38,27 @@ class Application(app.Application):
 
 
 if __name__ == '__main__':
-    run(Application)
+    sprockets.http.run(
+        Application,
+        settings={'port': 8888},
+        log_config={
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'readable': {
+                    'format': '%(levelname)-13s %(name)s: %(message)s',
+                }
+            },
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'readable',
+                    'stream': 'ext://sys.stdout',
+                }
+            },
+            'root': {
+                'level': 'DEBUG',
+                'handlers': ['console'],
+            }
+        },
+    )

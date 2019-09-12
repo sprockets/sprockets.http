@@ -1,4 +1,5 @@
 from unittest import mock
+import asyncio
 import contextlib
 import distutils.dist
 import distutils.errors
@@ -7,9 +8,12 @@ import os
 import json
 import time
 import unittest
+import uuid
+import warnings
 
 from tornado import concurrent, httpserver, httputil, ioloop, testing, web
 
+import sprockets.http.app
 import sprockets.http.mixins
 import sprockets.http.runner
 import sprockets.http.testing
@@ -55,16 +59,19 @@ class MockHelper(unittest.TestCase):
 
 
 @contextlib.contextmanager
-def override_environment_variable(name, value):
-    stash = os.environ.pop(name, None)
-    if value is not None:
-        os.environ[name] = value
+def override_environment_variable(**env_vars):
+    stash = {}
+    for name, value in env_vars.items():
+        stash[name] = os.environ.pop(name, None)
+        if value is not None:
+            os.environ[name] = value
     try:
         yield
     finally:
-        os.environ.pop(name, None)
-        if stash is not None:
-            os.environ[name] = stash
+        for name, value in stash.items():
+            os.environ.pop(name, None)
+            if value is not None:
+                os.environ[name] = value
 
 
 class ErrorLoggerTests(testing.AsyncHTTPTestCase):
@@ -240,21 +247,21 @@ class RunTests(MockHelper, unittest.TestCase):
 
     def test_that_debug_envvar_enables_debug_flag(self):
         create_app = mock.Mock()
-        with override_environment_variable('DEBUG', '1'):
+        with override_environment_variable(DEBUG='1'):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=True)
             self.get_logging_config.assert_called_once_with(True)
 
     def test_that_false_debug_envvar_disables_debug_flag(self):
         create_app = mock.Mock()
-        with override_environment_variable('DEBUG', '0'):
+        with override_environment_variable(DEBUG='0'):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=False)
             self.get_logging_config.assert_called_once_with(False)
 
     def test_that_unset_debug_envvar_disables_debug_flag(self):
         create_app = mock.Mock()
-        with override_environment_variable('DEBUG', None):
+        with override_environment_variable(DEBUG=None):
             sprockets.http.run(create_app)
             create_app.assert_called_once_with(debug=False)
             self.get_logging_config.assert_called_once_with(False)
@@ -264,7 +271,7 @@ class RunTests(MockHelper, unittest.TestCase):
         self.runner_instance.run.assert_called_once_with(8000, mock.ANY)
 
     def test_that_port_envvar_sets_port_number(self):
-        with override_environment_variable('PORT', '8888'):
+        with override_environment_variable(PORT='8888'):
             sprockets.http.run(mock.Mock())
             self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
@@ -289,6 +296,14 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
         self.logging_dict_config.assert_called_once_with(
             mock.sentinel.config)
+
+    def test_that_not_specifying_logging_config_is_deprecated(self):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            sprockets.http.run(mock.Mock())
+
+        self.assertEqual(len(captured), 1)
+        self.assertTrue(issubclass(captured[0].category, DeprecationWarning))
 
 
 class CallbackTests(MockHelper, unittest.TestCase):
@@ -642,3 +657,116 @@ class TestCaseTests(unittest.TestCase):
         test_case.app.stop.assert_called_once_with(
             test_case.io_loop, test_case.shutdown_limit,
             test_case.wait_timeout)
+
+
+class CorrelationFilterTests(unittest.TestCase):
+    def setUp(self):
+        super(CorrelationFilterTests, self).setUp()
+        self.logger = logging.getLogger()
+        self.record = self.logger.makeRecord(
+            'name', logging.INFO, 'functionName', 42, 'hello %s',
+            tuple(['world']), (None, None, None))
+        self.filter = sprockets.http._CorrelationFilter()
+
+    def test_that_correlation_filter_adds_correlation_id(self):
+        self.filter.filter(self.record)
+        self.assertTrue(hasattr(self.record, 'correlation-id'))
+
+    def test_that_correlation_filter_does_not_overwrite_correlation_id(self):
+        some_value = str(uuid.uuid4())
+        setattr(self.record, 'correlation-id', some_value)
+        self.filter.filter(self.record)
+        self.assertEqual(getattr(self.record, 'correlation-id'), some_value)
+
+
+class LoggingConfigurationTests(unittest.TestCase):
+    def test_that_debug_sets_log_level_to_debug(self):
+        config = sprockets.http._get_logging_config(True)
+        self.assertEqual(config['root']['level'], 'DEBUG')
+
+    def test_that_not_debug_sets_log_level_to_info(self):
+        config = sprockets.http._get_logging_config(False)
+        self.assertEqual(config['root']['level'], 'INFO')
+
+    def test_that_format_includes_sd_when_service_and_env_are_set(self):
+        with override_environment_variable(SERVICE='service',
+                                           ENVIRONMENT='whatever'):
+            config = sprockets.http._get_logging_config(False)
+        fmt_name = list(config['formatters'].keys())[0]
+        self.assertIn('service="service" environment="whatever"',
+                      config['formatters'][fmt_name]['format'])
+
+
+class ShutdownHandlerTests(unittest.TestCase):
+    def setUp(self):
+        super(ShutdownHandlerTests, self).setUp()
+        self.io_loop = ioloop.IOLoop.current()
+
+    def test_that_on_future_complete_logs_exceptions_from_future(self):
+        future = concurrent.Future()
+        future.set_exception(Exception('Injected Failure'))
+        handler = sprockets.http.app._ShutdownHandler(self.io_loop, 0.2, 0.05)
+        with self.assertLogs(handler.logger, 'WARNING') as cm:
+            handler.on_shutdown_future_complete(future)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn('Injected Failure', cm.output[0])
+
+    def test_that_on_future_complete_logs_active_exceptions(self):
+        future = concurrent.Future()
+        future.set_exception(Exception('Injected Failure'))
+        handler = sprockets.http.app._ShutdownHandler(self.io_loop, 0.2, 0.05)
+        with self.assertLogs(handler.logger, 'WARNING') as cm:
+            try:
+                future.result()
+            except Exception:
+                handler.on_shutdown_future_complete(future)
+        self.assertEqual(len(cm.output), 1)
+        self.assertIn('Injected Failure', cm.output[0])
+
+    def test_that_maybe_stop_retries_until_tasks_are_complete(self):
+        async def f():
+            pass
+
+        fake_loop = unittest.mock.Mock()
+        fake_loop.time.return_value = 10
+
+        loop = asyncio.get_event_loop()
+        tasks = [loop.create_task(f()) for _ in range(5)]
+
+        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
+        handler.on_shutdown_ready()  # sets __deadline to 15
+        fake_loop.add_timeout.reset_mock()
+
+        while tasks:
+            task = tasks.pop()
+            handler._maybe_stop()
+            fake_loop.add_timeout.assert_called_once_with(
+                unittest.mock.ANY, handler._maybe_stop)
+            fake_loop.add_timeout.reset_mock()
+            loop.run_until_complete(task)
+            del task
+
+        handler._maybe_stop()
+        fake_loop.stop.assert_called_once_with()
+
+    def test_that_maybe_stop_terminates_when_deadline_reached(self):
+        fake_loop = unittest.mock.Mock()
+        fake_loop.time.return_value = 10
+
+        loop = asyncio.get_event_loop()
+        loop.create_task(asyncio.sleep(10))
+
+        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
+        handler.on_shutdown_ready()  # sets __deadline to 15
+        fake_loop.add_timeout.reset_mock()
+
+        while fake_loop.time.return_value < 15:
+            handler._maybe_stop()
+            fake_loop.add_timeout.assert_called_once_with(
+                unittest.mock.ANY, handler._maybe_stop)
+            fake_loop.add_timeout.reset_mock()
+            fake_loop.time.return_value += 1
+
+        handler._maybe_stop()
+        fake_loop.stop.assert_called_once_with()
+        self.assertEqual(len(asyncio.Task.all_tasks(loop)), 1)
