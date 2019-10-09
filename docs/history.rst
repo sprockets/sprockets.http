@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`2.1.0`_ (9 Oct 2019)
+---------------------
 - Make shutdown timings configurable.
 - Add :class:`sprockets.http.testing.SprocketsHttpTestCase`.
 - Deprecate calling :func:`sprockets.http.run` without a specified
@@ -142,4 +142,5 @@ Release History
 .. _1.5.0: https://github.com/sprockets/sprockets.http/compare/1.4.2...1.5.0
 .. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.5.0...2.0.0
 .. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.1...master
+.. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.0...master
