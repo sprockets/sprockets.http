@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`2.1.1`_ (19 Feb 2020)
+----------------------
 - :meth:`sprockets.http.app.CallbackManager.stop` no longer requires the
   event loop to be running (fixes `#34`_)
 
@@ -150,4 +150,5 @@ Release History
 .. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.5.0...2.0.0
 .. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
 .. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.0...master
+.. _2.1.1: https://github.com/sprockets/sprockets.http/compare/2.1.0...2.1.1
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.1...master
