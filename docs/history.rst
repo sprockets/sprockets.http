@@ -3,6 +3,13 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- :meth:`sprockets.http.app.CallbackManager.stop` no longer requires the
+  event loop to be running (fixes `#34`_)
+
+.. _#34: https://github.com/sprockets/sprockets.http/issues/34
+
 `2.1.0`_ (9 Oct 2019)
 ---------------------
 - Make shutdown timings configurable.
