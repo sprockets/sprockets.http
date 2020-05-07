@@ -3,6 +3,14 @@
 Release History
 ===============
 
+Next release
+------------
+- Change :meth:`sprockets.http.app.CallbackManager.stop` to use
+  :func:`asyncio.ensure_future` instead of :func:`asyncio.create_task`
+  since the latter does not reliably cause the task to show up in
+  :meth:`asyncio.Task.all_tasks` or :func:`asyncio.all_tasks` for some
+  reason
+
 `2.1.1`_ (19 Feb 2020)
 ----------------------
 - :meth:`sprockets.http.app.CallbackManager.stop` no longer requires the

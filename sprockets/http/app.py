@@ -127,9 +127,7 @@ class CallbackManager:
                 maybe_future = callback(self.tornado_application)
 
                 if asyncio.iscoroutine(maybe_future):
-                    maybe_future = io_loop.asyncio_loop.create_task(
-                        maybe_future)
-
+                    asyncio.ensure_future(maybe_future)
                 if concurrent.is_future(maybe_future):
                     shutdown.add_future(maybe_future)
                     running_async = True
