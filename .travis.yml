@@ -1,9 +1,11 @@
 language: python
+os: linux
 dist: xenial
 python:
 - 3.5
 - 3.6
 - 3.7
+- 3.8
 install:
 - pip install -r requires/development.txt codecov
 script:
@@ -12,11 +14,10 @@ script:
 - flake8
 after_success:
 - codecov
-sudo: false
 deploy:
   distributions: sdist bdist_wheel
   provider: pypi
-  user: sprockets
+  username: sprockets
   password:
     secure: ARvFw5CHqQZqPOkJXxQSe7EAEbX1yt7FiBTtzz8Gd6XndbY10HVCSWhGYeldm9LevvQc9p77pBEvsl+bXGQbJ3NW/r/U5PADaFdmi4bxmXN8yc+dFKzn72MpZfL+kCV2T/HutuOY6dQa4okTkKVV+sqwPLKPhL69zH/PxQg8qe4=
   on:
