@@ -1,5 +1,4 @@
 from unittest import mock
-import asyncio
 import contextlib
 import distutils.dist
 import distutils.errors
@@ -724,49 +723,55 @@ class ShutdownHandlerTests(unittest.TestCase):
         self.assertIn('Injected Failure', cm.output[0])
 
     def test_that_maybe_stop_retries_until_tasks_are_complete(self):
-        async def f():
-            pass
-
         fake_loop = unittest.mock.Mock()
         fake_loop.time.return_value = 10
 
-        loop = asyncio.get_event_loop()
-        tasks = [loop.create_task(f()) for _ in range(5)]
+        wait_timeout = 1.0
+        handler = sprockets.http.app._ShutdownHandler(
+            fake_loop, 5.0, wait_timeout)
 
-        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
-        handler.on_shutdown_ready()  # sets __deadline to 15
+        handler._all_tasks = unittest.mock.Mock()
+        handler._all_tasks.return_value = ['does-not-matter']
+
+        # on_shutdown_ready should schedule the callback since there
+        # are outstanding tasks
+        handler.on_shutdown_ready()
+        fake_loop.add_timeout.assert_called_once_with(
+            fake_loop.time.return_value + wait_timeout,
+            handler._maybe_stop)
         fake_loop.add_timeout.reset_mock()
 
-        while tasks:
-            task = tasks.pop()
-            handler._maybe_stop()
-            fake_loop.add_timeout.assert_called_once_with(
-                unittest.mock.ANY, handler._maybe_stop)
-            fake_loop.add_timeout.reset_mock()
-            loop.run_until_complete(task)
-            del task
+        # the callback should re-schedule since there are still
+        # outstanding tasks
+        handler._maybe_stop()
+        fake_loop.add_timeout.assert_called_once_with(
+            fake_loop.time.return_value + wait_timeout,
+            handler._maybe_stop)
+        fake_loop.add_timeout.reset_mock()
 
+        # when all of the tasks are finished, the loop is stopped
+        handler._all_tasks.return_value = []
         handler._maybe_stop()
         fake_loop.stop.assert_called_once_with()
 
     def test_that_maybe_stop_terminates_when_deadline_reached(self):
         fake_loop = unittest.mock.Mock()
-        fake_loop.time.return_value = 10
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(asyncio.sleep(10))
+        shutdown_limit = 10
+        ticks = range(0, shutdown_limit)
+        handler = sprockets.http.app._ShutdownHandler(
+            fake_loop, shutdown_limit, 1.0)
 
-        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0, 0.0)
-        handler.on_shutdown_ready()  # sets __deadline to 15
-        fake_loop.add_timeout.reset_mock()
+        handler._all_tasks = unittest.mock.Mock()
+        handler._all_tasks.return_value = ['does-not-matter']
 
-        while fake_loop.time.return_value < 15:
+        fake_loop.time.return_value = 0.0
+        handler.on_shutdown_ready()  # sets deadline to 0 + shutdown_limit
+        for time_value in ticks:  # tick down
+            fake_loop.time.return_value = float(time_value)
             handler._maybe_stop()
-            fake_loop.add_timeout.assert_called_once_with(
-                unittest.mock.ANY, handler._maybe_stop)
-            fake_loop.add_timeout.reset_mock()
-            fake_loop.time.return_value += 1
+            fake_loop.stop.assert_not_called()
 
+        fake_loop.time.return_value = float(shutdown_limit)
         handler._maybe_stop()
         fake_loop.stop.assert_called_once_with()
-        self.assertEqual(len(asyncio.Task.all_tasks(loop)), 1)

@@ -41,12 +41,18 @@ class _ShutdownHandler:
         self._maybe_stop()
 
     def _maybe_stop(self):
+        all_tasks = self._all_tasks()
         now = self.io_loop.time()
-        if now < self.__deadline and asyncio.Task.all_tasks():
+        if now < self.__deadline and all_tasks:
             self.io_loop.add_timeout(now + self.wait_timeout, self._maybe_stop)
         else:
             self.io_loop.stop()
             self.logger.info('stopped IOLoop')
+
+    def _all_tasks(self):
+        if hasattr(asyncio, 'all_tasks'):
+            return asyncio.all_tasks(self.io_loop.asyncio_loop)
+        return asyncio.Task.all_tasks(self.io_loop.asyncio_loop)
 
 
 class CallbackManager:

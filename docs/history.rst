@@ -3,6 +3,11 @@
 Release History
 ===============
 
+Next release
+------------
+- Updated to support Python 3.9.  ``asyncio.Task.all_tasks`` was removed
+  so I switched to ``asyncio.all_tasks`` if it exists.
+
 `2.1.1`_ (19 Feb 2020)
 ----------------------
 - :meth:`sprockets.http.app.CallbackManager.stop` no longer requires the
