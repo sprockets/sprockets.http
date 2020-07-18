@@ -469,6 +469,21 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.io_loop.stop.assert_called_once_with()
         self.assertNotEqual(self.io_loop._timeouts, [])
 
+    def test_that_calling_with_non_sprockets_application_is_deprecated(self):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.filterwarnings(action='always', module='sprockets')
+            sprockets.http.runner.Runner(web.Application())
+        for warning in captured:
+            if 'sprockets.app.Application' in str(warning.message):
+                break
+        else:
+            self.fail('expected deprecation warning from runnr.Runner')
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.filterwarnings(action='always', module='sprockets')
+            sprockets.http.runner.Runner(sprockets.http.app.Application())
+        self.assertEqual(len(captured), 0)
+
 
 class AsyncRunTests(unittest.TestCase):
 

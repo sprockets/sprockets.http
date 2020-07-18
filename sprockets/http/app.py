@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import warnings
 
 from tornado import concurrent, web
 
@@ -260,6 +261,11 @@ def wrap_application(application, before_run, on_start, shutdown):
     shutdown = [] if shutdown is None else shutdown
 
     if not isinstance(application, Application):
+        warnings.warn(
+            'sprockets.http.run is only going to accept '
+            'sprockets.app.Application instances in 3.0, '
+            'was called with {}'.format(type(application).__name__),
+            category=DeprecationWarning)
         application = _ApplicationAdapter(application)
 
     application.before_run_callbacks.extend(before_run)

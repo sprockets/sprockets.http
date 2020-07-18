@@ -3,10 +3,12 @@
 Release History
 ===============
 
-Next release
-------------
+`Next release`_
+---------------
 - Updated to support Python 3.9.  ``asyncio.Task.all_tasks`` was removed
   so I switched to ``asyncio.all_tasks`` if it exists.
+- Deprecate calling ``sprockets.http.run`` with anything that isn't a
+  ``sprockets.app.Application`` instance.
 
 `2.1.1`_ (19 Feb 2020)
 ----------------------
