@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next release`_
----------------
+`2.1.2`_ (15 Sep 2020)
+----------------------
 - Updated to support Python 3.9.  ``asyncio.Task.all_tasks`` was removed
   so I switched to ``asyncio.all_tasks`` if it exists.
 - Deprecate calling ``sprockets.http.run`` with anything that isn't a
@@ -158,4 +158,5 @@ Release History
 .. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
 .. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
 .. _2.1.1: https://github.com/sprockets/sprockets.http/compare/2.1.0...2.1.1
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.1...master
+.. _2.1.2: https://github.com/sprockets/sprockets.http/compare/2.1.1...2.1.2
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.2...master
