@@ -77,7 +77,7 @@ class Runner:
         """
         signal.signal(signal.SIGTERM, self._on_signal)
         signal.signal(signal.SIGINT, self._on_signal)
-        xheaders = self.application.settings.get('xheaders', False)
+        xheaders = self.application.settings.get('xheaders', True)
         max_body_size = self.application.settings.get('max_body_size', None)
         max_buffer_size = self.application.settings.get('max_buffer_size',
                                                         None)

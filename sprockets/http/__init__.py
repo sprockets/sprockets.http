@@ -55,7 +55,7 @@ def run(create_application, settings=None, log_config=_unspecified):
     X-Real-IP, to get the user's IP address instead of attributing all
     traffic to the load balancer's IP address. When running behind a load
     balancer like nginx, it is recommended to pass xheaders=True. The default
-    value is False if nothing overrides it.
+    value is True if nothing overrides it.
 
     """
     from . import runner
