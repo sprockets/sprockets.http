@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.2.0`_ (28 Sep 2020)
+----------------------
+- Change xheaders option to default to ``True``
+
 `2.1.2`_ (15 Sep 2020)
 ----------------------
 - Updated to support Python 3.9.  ``asyncio.Task.all_tasks`` was removed
@@ -159,4 +163,5 @@ Release History
 .. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
 .. _2.1.1: https://github.com/sprockets/sprockets.http/compare/2.1.0...2.1.1
 .. _2.1.2: https://github.com/sprockets/sprockets.http/compare/2.1.1...2.1.2
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.2...master
+.. _2.2.0: https://github.com/sprockets/sprockets.http/compare/2.1.2...2.2.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.2.0...master

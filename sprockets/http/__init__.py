@@ -4,7 +4,7 @@ import os
 import warnings
 
 
-version_info = (2, 1, 2)
+version_info = (2, 2, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 
 _unspecified = object()
