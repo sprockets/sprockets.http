@@ -1,4 +1,4 @@
--e .
+-e '.[sentry]'
 -r testing.txt
 -r docs.txt
 flake8==3.7.8

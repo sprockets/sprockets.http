@@ -3,6 +3,19 @@ import logging.config
 import os
 import warnings
 
+try:
+    import sentry_sdk
+    import sentry_sdk.integrations.logging
+    import sentry_sdk.integrations.tornado
+
+    _sentry_integrations = [
+        sentry_sdk.integrations.logging.LoggingIntegration(
+            event_level=logging.CRITICAL),
+        sentry_sdk.integrations.tornado.TornadoIntegration(),
+    ]
+except ModuleNotFoundError:
+    sentry_sdk = None
+
 
 version_info = (2, 2, 0)
 __version__ = '.'.join(str(v) for v in version_info)
@@ -77,8 +90,16 @@ def run(create_application, settings=None, log_config=_unspecified):
 
     port_number = int(app_settings.pop('port', os.environ.get('PORT', 8000)))
     num_procs = int(app_settings.pop('number_of_procs', '0'))
-    server = runner.Runner(create_application(**app_settings))
+    app = create_application(**app_settings)
 
+    if sentry_sdk is not None:
+        sentry_sdk.init(
+            integrations=_sentry_integrations,
+            release=app.settings.get('version'),
+            environment=app.settings.get('environment'),
+        )
+
+    server = runner.Runner(app)
     server.run(port_number, num_procs)
 
 

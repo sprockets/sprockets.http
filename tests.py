@@ -304,6 +304,31 @@ class RunTests(MockHelper, unittest.TestCase):
         self.assertEqual(len(captured), 1)
         self.assertTrue(issubclass(captured[0].category, DeprecationWarning))
 
+    @mock.patch('sentry_sdk.init')
+    def test_that_sentry_is_initialized(self, mock_sentry_init):
+        app = mock.Mock()
+        app.settings = {
+            'environment': 'whatever',
+            'version': 'a.b.c',
+        }
+        sprockets.http.run(lambda *_, **__: app)
+        mock_sentry_init.assert_called_once_with(
+            integrations=sprockets.http._sentry_integrations,
+            release='a.b.c',
+            environment='whatever',
+        )
+
+    @mock.patch('sentry_sdk.init')
+    def test_that_sentry_is_initialized_with_defaults(self, mock_sentry_init):
+        app = mock.Mock()
+        app.settings = {}
+        sprockets.http.run(lambda *_, **__: app)
+        mock_sentry_init.assert_called_once_with(
+            integrations=sprockets.http._sentry_integrations,
+            release=None,
+            environment=None,
+        )
+
 
 class CallbackTests(MockHelper, unittest.TestCase):
 
