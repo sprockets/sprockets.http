@@ -94,11 +94,13 @@ def run(create_application, settings=None, log_config=_unspecified):
     app = create_application(**app_settings)
 
     if 'sentry_sdk' in sys.modules:
-        sentry_sdk.init(
-            integrations=_sentry_integrations,
-            release=app.settings.get('version'),
-            environment=app.settings.get('environment'),
-        )
+        kwargs = {
+            'integrations': _sentry_integrations,
+            'release': app.settings.get('version'),
+            'environment': app.settings.get('environment'),
+        }
+        kwargs.update(app.settings.get('sentry_sdk_init') or {})
+        sentry_sdk.init(**kwargs)
 
     server = runner.Runner(app)
     server.run(port_number, num_procs)
