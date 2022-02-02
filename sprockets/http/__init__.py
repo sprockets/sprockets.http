@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import sys
 import warnings
 
 try:
@@ -14,7 +15,7 @@ try:
         sentry_sdk.integrations.tornado.TornadoIntegration(),
     ]
 except ModuleNotFoundError:
-    sentry_sdk = None
+    pass
 
 
 version_info = (2, 2, 0)
@@ -92,7 +93,7 @@ def run(create_application, settings=None, log_config=_unspecified):
     num_procs = int(app_settings.pop('number_of_procs', '0'))
     app = create_application(**app_settings)
 
-    if sentry_sdk is not None:
+    if 'sentry_sdk' in sys.modules:
         sentry_sdk.init(
             integrations=_sentry_integrations,
             release=app.settings.get('version'),
