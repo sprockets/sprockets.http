@@ -1,9 +1,10 @@
 import asyncio
+import datetime
 import logging
 import sys
 import warnings
 
-from tornado import concurrent, web
+from tornado import concurrent, log, web
 
 
 class _ShutdownHandler:
@@ -213,6 +214,48 @@ class Application(CallbackManager, web.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
+    def log_request(self, handler):
+        """Customized access log function.
+
+        :param tornado.web.RequestHandler handler:
+
+        """
+        status = handler.get_status()
+
+        if status < 400:
+            if getattr(handler, 'access_log_failures_only', False):
+                log_level = logging.DEBUG
+            else:
+                log_level = logging.INFO
+        elif status < 500:
+            log_level = logging.WARNING
+        else:
+            log_level = logging.ERROR
+
+        started_at = datetime.datetime.fromtimestamp(
+            handler.request._start_time, datetime.timezone.utc)
+        try:
+            bytes_written = handler.response_bytes_written
+        except AttributeError:
+            bytes_written = '-'
+
+        log.access_log.log(
+            log_level,
+            '%s %s %s [%s] "%s %s %s" %d %s "%s" "%s" (secs:%.03f)',
+            handler.request.remote_ip,
+            '-',  # RFC-1413 user identifier
+            handler.get_current_user() or '-',
+            started_at.strftime('%d/%b/%Y:%H:%M:%S %z'),
+            handler.request.method,
+            handler.request.uri,
+            handler.request.version,
+            status,
+            bytes_written,
+            handler.request.headers.get('Referer', '-'),
+            handler.request.headers.get('User-Agent', '-'),
+            handler.request.request_time(),
+        )
 
 
 class _ApplicationAdapter(CallbackManager):
