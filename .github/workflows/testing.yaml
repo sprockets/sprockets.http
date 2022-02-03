@@ -19,7 +19,7 @@ jobs:
       image: python:${{ matrix.python }}-alpine
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Install testing dependencies
         run: pip3 --no-cache-dir install -r requires/development.txt
