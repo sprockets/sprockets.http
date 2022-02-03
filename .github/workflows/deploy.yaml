@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v1
       - name: Build package
-        run: python3 setup.py sdist
+        run: python3 setup.py bdist_wheel sdist
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@master
         with:
