@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.3.0`_ (03 Feb 2022)
+----------------------
+- Added optional Sentry integration
+
 `2.2.0`_ (28 Sep 2020)
 ----------------------
 - Change xheaders option to default to ``True``
