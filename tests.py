@@ -234,75 +234,120 @@ class RunTests(MockHelper, unittest.TestCase):
         self.logging_dict_config = self.start_mock(
             'sprockets.http.logging.config').dictConfig
 
+        self.app = mock.Mock()
+        self.app.settings = {}
+        self.create_app = mock.Mock(return_value=self.app)
+
     @property
     def runner_instance(self):
         return self.runner_cls.return_value
 
     def test_that_runner_run_called_with_created_application(self):
-        create_app = mock.Mock()
-        sprockets.http.run(create_app)
-        self.assertEqual(create_app.call_count, 1)
-        self.runner_cls.assert_called_once_with(create_app.return_value)
+        sprockets.http.run(self.create_app)
+        self.assertEqual(self.create_app.call_count, 1)
+        self.runner_cls.assert_called_once_with(self.create_app.return_value)
 
     def test_that_debug_envvar_enables_debug_flag(self):
-        create_app = mock.Mock()
         with override_environment_variable(DEBUG='1'):
-            sprockets.http.run(create_app)
-            create_app.assert_called_once_with(debug=True)
+            sprockets.http.run(self.create_app)
+            self.create_app.assert_called_once_with(debug=True)
             self.get_logging_config.assert_called_once_with(True)
 
     def test_that_false_debug_envvar_disables_debug_flag(self):
-        create_app = mock.Mock()
         with override_environment_variable(DEBUG='0'):
-            sprockets.http.run(create_app)
-            create_app.assert_called_once_with(debug=False)
+            sprockets.http.run(self.create_app)
+            self.create_app.assert_called_once_with(debug=False)
             self.get_logging_config.assert_called_once_with(False)
 
     def test_that_unset_debug_envvar_disables_debug_flag(self):
-        create_app = mock.Mock()
         with override_environment_variable(DEBUG=None):
-            sprockets.http.run(create_app)
-            create_app.assert_called_once_with(debug=False)
+            sprockets.http.run(self.create_app)
+            self.create_app.assert_called_once_with(debug=False)
             self.get_logging_config.assert_called_once_with(False)
 
     def test_that_port_defaults_to_8000(self):
-        sprockets.http.run(mock.Mock())
+        sprockets.http.run(self.create_app)
         self.runner_instance.run.assert_called_once_with(8000, mock.ANY)
 
     def test_that_port_envvar_sets_port_number(self):
         with override_environment_variable(PORT='8888'):
-            sprockets.http.run(mock.Mock())
+            sprockets.http.run(self.create_app)
             self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
     def test_that_port_kwarg_sets_port_number(self):
-        sprockets.http.run(mock.Mock(), settings={'port': 8888})
+        sprockets.http.run(self.create_app, settings={'port': 8888})
         self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
     def test_that_number_of_procs_defaults_to_zero(self):
-        sprockets.http.run(mock.Mock())
+        sprockets.http.run(self.create_app)
         self.runner_instance.run.assert_called_once_with(mock.ANY, 0)
 
     def test_that_number_of_process_kwarg_sets_number_of_procs(self):
-        sprockets.http.run(mock.Mock(), settings={'number_of_procs': 1})
+        sprockets.http.run(self.create_app, settings={'number_of_procs': 1})
         self.runner_instance.run.assert_called_once_with(mock.ANY, 1)
 
     def test_that_logging_dict_config_is_called_appropriately(self):
-        sprockets.http.run(mock.Mock())
+        sprockets.http.run(self.create_app)
         self.logging_dict_config.assert_called_once_with(
             self.get_logging_config.return_value)
 
     def test_that_logconfig_override_is_used(self):
-        sprockets.http.run(mock.Mock(), log_config=mock.sentinel.config)
+        sprockets.http.run(self.create_app, log_config=mock.sentinel.config)
         self.logging_dict_config.assert_called_once_with(
             mock.sentinel.config)
 
     def test_that_not_specifying_logging_config_is_deprecated(self):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
-            sprockets.http.run(mock.Mock())
+            sprockets.http.run(self.create_app)
 
         self.assertEqual(len(captured), 1)
         self.assertTrue(issubclass(captured[0].category, DeprecationWarning))
+
+    @mock.patch('sentry_sdk.init')
+    def test_that_sentry_is_initialized_with_implied_overrides(
+            self, mock_sentry_init):
+        self.app.settings = {
+            'environment': 'whatever',
+            'version': 'a.b.c',
+        }
+        sprockets.http.run(self.create_app)
+        mock_sentry_init.assert_called_once_with(
+            integrations=sprockets.http._sentry_integrations,
+            release='a.b.c',
+            environment='whatever',
+        )
+
+    @mock.patch('sentry_sdk.init')
+    def test_that_sentry_is_initialized_with_explicit_overrides(
+            self, mock_sentry_init):
+        self.app.settings = {
+            'sentry_sdk_init': {
+                'before_send': mock.sentinel.before_send,
+                'integrations': mock.sentinel.integrations,
+                'environment': mock.sentinel.environment,
+                'release': mock.sentinel.release,
+            },
+            'environment': 'whatever',
+            'version': 'a.b.c',
+        }
+        sprockets.http.run(self.create_app)
+        mock_sentry_init.assert_called_once_with(
+            integrations=mock.sentinel.integrations,
+            before_send=mock.sentinel.before_send,
+            release=mock.sentinel.release,
+            environment=mock.sentinel.environment,
+        )
+
+    @mock.patch('sentry_sdk.init')
+    def test_that_sentry_is_initialized_with_defaults(self, mock_sentry_init):
+        self.app.settings = {}
+        sprockets.http.run(self.create_app)
+        mock_sentry_init.assert_called_once_with(
+            integrations=sprockets.http._sentry_integrations,
+            release=None,
+            environment=None,
+        )
 
 
 class CallbackTests(MockHelper, unittest.TestCase):

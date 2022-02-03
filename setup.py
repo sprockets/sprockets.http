@@ -34,6 +34,9 @@ setuptools.setup(
     entry_points={
         'distutils.commands': ['httprun=sprockets.http.runner:RunCommand'],
     },
+    extras_require={
+        'sentry': ['sentry-sdk>=1.5.4,<2'],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: No Input/Output (Daemon)',
