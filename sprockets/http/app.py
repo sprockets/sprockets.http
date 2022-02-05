@@ -214,6 +214,28 @@ class Application(CallbackManager, web.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+        service = self.settings.get('service')
+        if service:
+            parts = [service]
+            version = self.settings.get('version')
+            if version:
+                parts.append(version)
+            self.settings.setdefault('server_header', '/'.join(parts))
+        else:
+            self.settings.setdefault('server_header', None)
+
+        # use a closure to `self.settings` to allow for dynamic configuration
+        class ServerHeaderTransform(web.OutputTransform):
+            def transform_first_chunk(_, status_code, headers, chunk,
+                                      finishing):
+                value = self.settings.get('server_header')
+                if value is None:
+                    headers.pop('Server', None)
+                else:
+                    headers['Server'] = value
+                return status_code, headers, chunk
+
+        self.add_transform(ServerHeaderTransform)
 
     def log_request(self, handler):
         """Customized access log function.
