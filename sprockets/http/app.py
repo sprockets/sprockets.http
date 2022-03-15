@@ -242,7 +242,7 @@ class Application(CallbackManager, web.Application):
 
         log.access_log.log(
             log_level,
-            '%s %s %s [%s] "%s %s %s" %d %s "%s" "%s" (secs:%.03f)',
+            '%s %s %s [%s] "%s %s %s" %d "%s" %s "%s" "%s" (secs:%.03f)',
             handler.request.remote_ip,
             '-',  # RFC-1413 user identifier
             handler.get_current_user() or '-',
@@ -251,6 +251,7 @@ class Application(CallbackManager, web.Application):
             handler.request.uri,
             handler.request.version,
             status,
+            handler._reason or '-',
             bytes_written,
             handler.request.headers.get('Referer', '-'),
             handler.request.headers.get('User-Agent', '-'),

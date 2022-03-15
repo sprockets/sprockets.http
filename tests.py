@@ -814,11 +814,12 @@ class AccessLogTests(sprockets.http.testing.SprocketsHttpTestCase):
         when = datetime.datetime.fromtimestamp(request._start_time,
                                                datetime.timezone.utc)
         expected_message = re.compile(
-            r'^%s - - %s "%s %s %s" %d - "-" "-" \(secs:([^)]*)\)' %
+            r'^%s - - %s "%s %s %s" %d "%s" - "-" "-" \(secs:([^)]*)\)' %
             (request.remote_ip,
              re.escape(
                  when.strftime('[%d/%b/%Y:%H:%M:%S %z]')), request.method,
-             re.escape(request.uri), request.version, handler.get_status()))
+             re.escape(request.uri), request.version, handler.get_status(),
+             handler._reason))
         message = context.records[0].getMessage()
         match = expected_message.match(message)
         if match is None:
