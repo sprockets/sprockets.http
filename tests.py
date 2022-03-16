@@ -1,16 +1,18 @@
 from unittest import mock
 import contextlib
+import datetime
 import distutils.dist
 import distutils.errors
+import json
 import logging
 import os
-import json
+import re
 import time
 import unittest
 import uuid
 import warnings
 
-from tornado import concurrent, httpserver, httputil, ioloop, testing, web
+from tornado import concurrent, httpserver, httputil, ioloop, log, testing, web
 
 import sprockets.http.app
 import sprockets.http.mixins
@@ -835,3 +837,84 @@ class ShutdownHandlerTests(unittest.TestCase):
         fake_loop.time.return_value = float(shutdown_limit)
         handler._maybe_stop()
         fake_loop.stop.assert_called_once_with()
+
+
+class AccessLogTests(sprockets.http.testing.SprocketsHttpTestCase):
+
+    def get_app(self):
+        self.app = sprockets.http.app.Application([])
+        return self.app
+
+    def test_that_log_request_uses_expected_format(self):
+        request = httputil.HTTPServerRequest('GET', '/search?q=42')
+        request.remote_ip = '1.1.1.1'
+        request._start_time = time.time()
+        request.connection = unittest.mock.Mock()
+
+        handler = web.RequestHandler(self.app, request)
+
+        with self.assertLogs(log.access_log) as context:
+            self.app.log_request(handler)
+
+        when = datetime.datetime.fromtimestamp(request._start_time,
+                                               datetime.timezone.utc)
+        expected_message = re.compile(
+            r'^%s - - %s "%s %s %s" %d "%s" - "-" "-" \(secs:([^)]*)\)' %
+            (request.remote_ip,
+             re.escape(
+                 when.strftime('[%d/%b/%Y:%H:%M:%S %z]')), request.method,
+             re.escape(request.uri), request.version, handler.get_status(),
+             handler._reason))
+        message = context.records[0].getMessage()
+        match = expected_message.match(message)
+        if match is None:
+            self.fail(f'"{message}" did not match "{expected_message}"')
+        try:
+            float(match.group(1))
+        except ValueError:
+            self.fail(f'Expected {match.group(1)} to be a float')
+
+    def test_that_log_request_uses_correct_log_level(self):
+        expectations = {
+            200: logging.INFO,
+            303: logging.INFO,
+            400: logging.WARNING,
+            404: logging.WARNING,
+            500: logging.ERROR,
+            599: logging.ERROR,
+        }
+
+        request = httputil.HTTPServerRequest('GET', '/search?q=42')
+        request.remote_ip = '1.1.1.1'
+        request._start_time = time.time()
+        request.connection = unittest.mock.Mock()
+
+        for status, log_level in expectations.items():
+            handler = web.RequestHandler(self.app, request)
+            handler.set_status(status)
+            with self.assertLogs(log.access_log, log_level) as context:
+                self.app.log_request(handler)
+            self.assertEqual(context.records[0].levelno, log_level)
+
+    def test_that_log_request_uses_correct_log_level_with_only_failures(self):
+        expectations = {
+            200: logging.DEBUG,
+            303: logging.DEBUG,
+            400: logging.WARNING,
+            404: logging.WARNING,
+            500: logging.ERROR,
+            599: logging.ERROR,
+        }
+
+        request = httputil.HTTPServerRequest('GET', '/search?q=42')
+        request.remote_ip = '1.1.1.1'
+        request._start_time = time.time()
+        request.connection = unittest.mock.Mock()
+
+        for status, log_level in expectations.items():
+            handler = web.RequestHandler(self.app, request)
+            handler.access_log_failures_only = True
+            handler.set_status(status)
+            with self.assertLogs(log.access_log, log_level) as context:
+                self.app.log_request(handler)
+            self.assertEqual(context.records[0].levelno, log_level)
