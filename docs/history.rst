@@ -3,6 +3,11 @@
 Release History
 ===============
 
+`2.4.0`_ (16 Mar 2022)
+----------------------
+- Add support for Python 3.10
+- Change the default access log format
+
 `2.3.0`_ (03 Feb 2022)
 ----------------------
 - Added optional Sentry integration
@@ -168,4 +173,6 @@ Release History
 .. _2.1.1: https://github.com/sprockets/sprockets.http/compare/2.1.0...2.1.1
 .. _2.1.2: https://github.com/sprockets/sprockets.http/compare/2.1.1...2.1.2
 .. _2.2.0: https://github.com/sprockets/sprockets.http/compare/2.1.2...2.2.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.2.0...master
+.. _2.3.0: https://github.com/sprockets/sprockets.http/compare/2.2.0...2.3.0
+.. _2.4.0: https://github.com/sprockets/sprockets.http/compare/2.3.0...2.4.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.4.0...master
