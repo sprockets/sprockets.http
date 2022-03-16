@@ -12,7 +12,7 @@ Setup
 
 code::
 
-    python3.9 -m venv env
+    python3.10 -m venv env
     pip install -r requires/development.txt
 
 
