@@ -16,6 +16,19 @@ in a clean manner.
   - catches ``SIGINT`` (e.g., ``Ctrl+C``)
   - application run in a single process
 
+Installation
+------------
+.. code::
+
+    pip install sprockets.http
+
+The ``sentry`` extra dependency can be used to install the dependencies
+needed to allow sprockets.http to automatically configure integration with Sentry.
+
+.. code::
+
+    pip install sprockets.http[sentry]
+
 Running Your Application
 ------------------------
 Running a Tornado application intelligently should be very easy.  Ideally

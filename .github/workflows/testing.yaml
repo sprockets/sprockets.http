@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install testing dependencies
-        run: pip3 --no-cache-dir install -r requires/development.txt
+        run: pip3 --no-cache-dir install -e '.[sentry]' -r requires/testing.txt
 
       - name: Run flake8 tests
         run: flake8
