@@ -280,13 +280,13 @@ class RunTests(MockHelper, unittest.TestCase):
         sprockets.http.run(self.create_app, settings={'port': 8888})
         self.runner_instance.run.assert_called_once_with(8888, mock.ANY)
 
-    def test_that_number_of_procs_defaults_to_zero(self):
+    def test_that_number_of_procs_defaults_to_one(self):
         sprockets.http.run(self.create_app)
-        self.runner_instance.run.assert_called_once_with(mock.ANY, 0)
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 1)
 
     def test_that_number_of_process_kwarg_sets_number_of_procs(self):
-        sprockets.http.run(self.create_app, settings={'number_of_procs': 1})
-        self.runner_instance.run.assert_called_once_with(mock.ANY, 1)
+        sprockets.http.run(self.create_app, settings={'number_of_procs': 2})
+        self.runner_instance.run.assert_called_once_with(mock.ANY, 2)
 
     def test_that_logging_dict_config_is_called_appropriately(self):
         sprockets.http.run(self.create_app)
@@ -455,7 +455,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.httpserver_module.HTTPServer.assert_called_once_with(
             self.application, **self.application.settings)
 
-    def test_that_production_run_starts_in_multiprocess_mode(self):
+    def test_that_production_run_starts_in_single_process_mode(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8000)
 
@@ -463,7 +463,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         args, kwargs = self.http_server.bind.call_args_list[0]
         self.assertEqual(args, (8000, ))
 
-        self.http_server.start.assert_called_once_with(0)
+        self.http_server.start.assert_called_once_with(1)
 
     def test_that_production_enables_reuse_port(self):
         runner = sprockets.http.runner.Runner(self.application)
