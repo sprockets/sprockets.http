@@ -918,3 +918,44 @@ class AccessLogTests(sprockets.http.testing.SprocketsHttpTestCase):
             with self.assertLogs(log.access_log, log_level) as context:
                 self.app.log_request(handler)
             self.assertEqual(context.records[0].levelno, log_level)
+
+
+class ServerHeaderTests(sprockets.http.testing.SprocketsHttpTestCase):
+
+    def get_app(self):
+        self.app = sprockets.http.app.Application(
+            server_header='a/b/c')
+        return self.app
+
+    def test_reads_from_settings(self):
+        self.app.settings['server_header'] = 'a/b/c'
+        response = self.fetch('/')
+        self.assertEqual('a/b/c', response.headers['Server'])
+
+        self.app.settings['server_header'] = 'some server'
+        response = self.fetch('/')
+        self.assertEqual('some server', response.headers['Server'])
+
+        self.app.settings['server_header'] = None
+        response = self.fetch('/')
+        self.assertNotIn('Server', response.headers)
+
+        self.app.settings.pop('server_header')
+        response = self.fetch('/')
+        self.assertNotIn('Server', response.headers)
+
+    def test_defaults(self):
+        app = sprockets.http.app.Application()
+        self.assertIsNone(app.settings['server_header'])
+
+        app = sprockets.http.app.Application(service='myservice',
+                                             version='myversion')
+        self.assertEqual('myservice/myversion', app.settings['server_header'])
+
+        app = sprockets.http.app.Application(service='myservice',
+                                             version=None)
+        self.assertEqual('myservice', app.settings['server_header'])
+
+        app = sprockets.http.app.Application(service=None,
+                                             version='myversion')
+        self.assertIsNone(app.settings['server_header'])
