@@ -210,6 +210,11 @@ class Application(CallbackManager, web.Application):
     Note that much of the functionality is implemented in
     :class:`.CallbackManager`.
 
+    .. rubric:: settings['server']
+
+    If the `server` parameter is provided, it will be used for the server
+    header. Otherwise, the server header will default as {service}/{version}
+
     """
 
     def __init__(self, *args, **kwargs):
