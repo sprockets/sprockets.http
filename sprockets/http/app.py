@@ -213,8 +213,8 @@ class Application(CallbackManager, web.Application):
     .. rubric:: settings['server']
 
     If the `server` parameter is provided, it will be used for the server
-    header. Otherwise, the server header will default as {service}/{version}
-    or {service}.
+    header. Otherwise, the server header will default as
+    ``{service}/{version}`` or ``{service}``.
 
     """
 
