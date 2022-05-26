@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.5.0`_ (26 May 2022)
+----------------------
+- Add customization of **Server** header
+
 `2.4.0`_ (16 Mar 2022)
 ----------------------
 - Add support for Python 3.10
@@ -175,4 +179,5 @@ Release History
 .. _2.2.0: https://github.com/sprockets/sprockets.http/compare/2.1.2...2.2.0
 .. _2.3.0: https://github.com/sprockets/sprockets.http/compare/2.2.0...2.3.0
 .. _2.4.0: https://github.com/sprockets/sprockets.http/compare/2.3.0...2.4.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.4.0...master
+.. _2.5.0: https://github.com/sprockets/sprockets.http/compare/2.4.0...2.5.0
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.5.0...master
