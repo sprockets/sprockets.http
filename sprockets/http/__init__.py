@@ -90,7 +90,7 @@ def run(create_application, settings=None, log_config=_unspecified):
         logging.config.dictConfig(log_config)
 
     port_number = int(app_settings.pop('port', os.environ.get('PORT', 8000)))
-    num_procs = int(app_settings.pop('number_of_procs', '0'))
+    num_procs = int(app_settings.pop('number_of_procs', 1))
     app = create_application(**app_settings)
 
     if 'sentry_sdk' in sys.modules:

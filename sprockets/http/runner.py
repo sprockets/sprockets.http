@@ -58,7 +58,7 @@ class Runner:
         self.shutdown_limit = 5.0
         self.wait_timeout = 1.0
 
-    def start_server(self, port_number, number_of_procs=0):
+    def start_server(self, port_number, number_of_procs=1):
         """
         Create a HTTP server and start it.
 
@@ -99,7 +99,7 @@ class Runner:
         """Stop the HTTP Server"""
         self.server.stop()
 
-    def run(self, port_number, number_of_procs=0):
+    def run(self, port_number, number_of_procs=1):
         """
         Create the server and run the IOLoop.
 
