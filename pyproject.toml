@@ -80,6 +80,7 @@ format = [
   "yapf -ir docs sprockets examples.py tests.py",
 ]
 lint = "pre-commit run --all-files"
+test = "pytest tests.py"
 
 [tool.isort]
 force_grid_wrap = 0
