@@ -532,7 +532,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.assertEqual(len(captured), 0)
 
 
-class AsyncRunTests(unittest.TestCase):
+class AsyncRunTests(unittest.IsolatedAsyncioTestCase):
 
     def test_that_on_start_callbacks_are_invoked(self):
         future = concurrent.Future()
@@ -546,6 +546,8 @@ class AsyncRunTests(unittest.TestCase):
         with mock.patch('sprockets.http.runner.Runner.start_server'):
             runner = sprockets.http.runner.Runner(application,
                                                   on_start=[on_started])
+            runner.wait_timeout = 0.1
+            runner.shutdown_limit = 0.25
             runner.run(8000)
         self.assertTrue(future.result())
 
@@ -569,6 +571,8 @@ class AsyncRunTests(unittest.TestCase):
             runner = sprockets.http.runner.Runner(application,
                                                   on_start=[on_started],
                                                   shutdown=[on_shutdown])
+            runner.wait_timeout = 0.1
+            runner.shutdown_limit = 0.25
             runner.run(8000)
 
         self.assertTrue(future.result())
