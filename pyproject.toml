@@ -73,6 +73,11 @@ dependencies = [
 ]
 features = ["sentry"]
 
+[tool.hatch.envs.default.scripts]
+format = [
+  "yapf -ir docs sprockets examples.py tests.py",
+]
+
 [tool.isort]
 force_grid_wrap = 0
 known_local_folder = ["examples", "sprockets.http"]

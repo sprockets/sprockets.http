@@ -81,8 +81,9 @@ def run(create_application, settings=None, log_config=_unspecified):
     from . import runner
 
     app_settings = {} if settings is None else settings.copy()
-    debug_mode = bool(app_settings.get('debug',
-                                       int(os.environ.get('DEBUG', 0)) != 0))
+    debug_mode = bool(
+        app_settings.get('debug',
+                         int(os.environ.get('DEBUG', 0)) != 0))
     app_settings['debug'] = debug_mode
     if log_config is _unspecified:
         warnings.warn(

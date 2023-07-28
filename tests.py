@@ -32,8 +32,7 @@ class RecordingHandler(logging.Handler):
 
 
 class RaisingHandler(sprockets.http.mixins.ErrorLogger,
-                     sprockets.http.mixins.ErrorWriter,
-                     web.RequestHandler):
+                     sprockets.http.mixins.ErrorWriter, web.RequestHandler):
 
     def get(self, status_code):
         raise web.HTTPError(int(status_code),
@@ -98,18 +97,18 @@ class ErrorLoggerTests(testing.AsyncHTTPTestCase):
         for record, message in self.recorder.emitted:
             if record.levelno == level and message.endswith(suffix):
                 return
-        self.fail('Expected message ending in "%s" to be logged in %r'
-                  % (suffix, self.recorder.emitted))
+        self.fail('Expected message ending in "%s" to be logged in %r' %
+                  (suffix, self.recorder.emitted))
 
     def test_that_client_error_logged_as_warning(self):
         self.fetch('/status/400')
-        self.assert_message_logged(
-            logging.WARNING, 'failed with 400: {}', httputil.responses[400])
+        self.assert_message_logged(logging.WARNING, 'failed with 400: {}',
+                                   httputil.responses[400])
 
     def test_that_server_error_logged_as_error(self):
         self.fetch('/status/500')
-        self.assert_message_logged(
-            logging.ERROR, 'failed with 500: {}', httputil.responses[500])
+        self.assert_message_logged(logging.ERROR, 'failed with 500: {}',
+                                   httputil.responses[500])
 
     def test_that_custom_status_codes_logged_as_unknown(self):
         self.fetch('/status/623')
@@ -121,8 +120,8 @@ class ErrorLoggerTests(testing.AsyncHTTPTestCase):
 
     def test_that_status_code_extracted_from_http_errors(self):
         self.fetch('/fail/400')
-        self.assert_message_logged(
-            logging.WARNING, 'failed with 400: {}', httputil.responses[400])
+        self.assert_message_logged(logging.WARNING, 'failed with 400: {}',
+                                   httputil.responses[400])
 
     def test_that_reason_extracted_from_http_errors(self):
         self.fetch('/fail/400?reason=oopsie')
@@ -295,8 +294,7 @@ class RunTests(MockHelper, unittest.TestCase):
 
     def test_that_logconfig_override_is_used(self):
         sprockets.http.run(self.create_app, log_config=mock.sentinel.config)
-        self.logging_dict_config.assert_called_once_with(
-            mock.sentinel.config)
+        self.logging_dict_config.assert_called_once_with(mock.sentinel.config)
 
     def test_that_not_specifying_logging_config_is_deprecated(self):
         with warnings.catch_warnings(record=True) as captured:
@@ -396,8 +394,8 @@ class CallbackTests(MockHelper, unittest.TestCase):
     def test_that_before_run_callback_invoked(self):
         runner = sprockets.http.runner.Runner(self.application)
         runner.run(8080)
-        self.before_run_callback.assert_called_once_with(self.application,
-                                                         self.io_loop)
+        self.before_run_callback.assert_called_once_with(
+            self.application, self.io_loop)
 
     def test_that_exceptions_from_before_run_callbacks_are_terminal(self):
         another_callback = mock.Mock()
@@ -413,8 +411,8 @@ class CallbackTests(MockHelper, unittest.TestCase):
                 runner = sprockets.http.runner.Runner(self.application)
                 runner.run(8080)
 
-        self.before_run_callback.assert_called_once_with(self.application,
-                                                         self.io_loop)
+        self.before_run_callback.assert_called_once_with(
+            self.application, self.io_loop)
         another_callback.assert_not_called()
         self.shutdown_callback.assert_called_once_with(self.application)
         sys_exit.assert_called_once_with(70)
@@ -502,9 +500,11 @@ class RunnerTests(MockHelper, unittest.TestCase):
                 runner._shutdown)
 
     def test_that_shutdown_stops_after_timelimit(self):
+
         def add_timeout(_, callback):
             time.sleep(0.1)
             callback()
+
         self.io_loop.add_timeout = mock.Mock(side_effect=add_timeout)
 
         self.io_loop._timeouts = [mock.Mock()]
@@ -557,6 +557,7 @@ class AsyncRunTests(unittest.TestCase):
                 runner._shutdown()
 
         def on_shutdown(*args, **kwargs):
+
             def shutdown_complete():
                 future.set_result(True)
 
@@ -698,6 +699,7 @@ class RunCommandTests(MockHelper, unittest.TestCase):
 class TestCaseTests(unittest.TestCase):
 
     class FakeTest(sprockets.http.testing.SprocketsHttpTestCase):
+
         def get_app(self):
             self.app = mock.Mock()
             return self.app
@@ -715,18 +717,20 @@ class TestCaseTests(unittest.TestCase):
         test_case.setUp()
         test_case.io_loop = mock.Mock()
         test_case.tearDown()
-        test_case.app.stop.assert_called_once_with(
-            test_case.io_loop, test_case.shutdown_limit,
-            test_case.wait_timeout)
+        test_case.app.stop.assert_called_once_with(test_case.io_loop,
+                                                   test_case.shutdown_limit,
+                                                   test_case.wait_timeout)
 
 
 class CorrelationFilterTests(unittest.TestCase):
+
     def setUp(self):
         super(CorrelationFilterTests, self).setUp()
         self.logger = logging.getLogger()
-        self.record = self.logger.makeRecord(
-            'name', logging.INFO, 'functionName', 42, 'hello %s',
-            tuple(['world']), (None, None, None))
+        self.record = self.logger.makeRecord('name', logging.INFO,
+                                             'functionName', 42, 'hello %s',
+                                             tuple(['world']),
+                                             (None, None, None))
         self.filter = sprockets.http._CorrelationFilter()
 
     def test_that_correlation_filter_adds_correlation_id(self):
@@ -741,6 +745,7 @@ class CorrelationFilterTests(unittest.TestCase):
 
 
 class LoggingConfigurationTests(unittest.TestCase):
+
     def test_that_debug_sets_log_level_to_debug(self):
         config = sprockets.http._get_logging_config(True)
         self.assertEqual(config['root']['level'], 'DEBUG')
@@ -759,6 +764,7 @@ class LoggingConfigurationTests(unittest.TestCase):
 
 
 class ShutdownHandlerTests(unittest.TestCase):
+
     def setUp(self):
         super(ShutdownHandlerTests, self).setUp()
         self.io_loop = ioloop.IOLoop.current()
@@ -789,8 +795,8 @@ class ShutdownHandlerTests(unittest.TestCase):
         fake_loop.time.return_value = 10
 
         wait_timeout = 1.0
-        handler = sprockets.http.app._ShutdownHandler(
-            fake_loop, 5.0, wait_timeout)
+        handler = sprockets.http.app._ShutdownHandler(fake_loop, 5.0,
+                                                      wait_timeout)
 
         handler._all_tasks = unittest.mock.Mock()
         handler._all_tasks.return_value = ['does-not-matter']
@@ -799,16 +805,14 @@ class ShutdownHandlerTests(unittest.TestCase):
         # are outstanding tasks
         handler.on_shutdown_ready()
         fake_loop.add_timeout.assert_called_once_with(
-            fake_loop.time.return_value + wait_timeout,
-            handler._maybe_stop)
+            fake_loop.time.return_value + wait_timeout, handler._maybe_stop)
         fake_loop.add_timeout.reset_mock()
 
         # the callback should re-schedule since there are still
         # outstanding tasks
         handler._maybe_stop()
         fake_loop.add_timeout.assert_called_once_with(
-            fake_loop.time.return_value + wait_timeout,
-            handler._maybe_stop)
+            fake_loop.time.return_value + wait_timeout, handler._maybe_stop)
         fake_loop.add_timeout.reset_mock()
 
         # when all of the tasks are finished, the loop is stopped
@@ -821,8 +825,8 @@ class ShutdownHandlerTests(unittest.TestCase):
 
         shutdown_limit = 10
         ticks = range(0, shutdown_limit)
-        handler = sprockets.http.app._ShutdownHandler(
-            fake_loop, shutdown_limit, 1.0)
+        handler = sprockets.http.app._ShutdownHandler(fake_loop,
+                                                      shutdown_limit, 1.0)
 
         handler._all_tasks = unittest.mock.Mock()
         handler._all_tasks.return_value = ['does-not-matter']
@@ -861,10 +865,9 @@ class AccessLogTests(sprockets.http.testing.SprocketsHttpTestCase):
         expected_message = re.compile(
             r'^%s - - %s "%s %s %s" %d "%s" - "-" "-" \(secs:([^)]*)\)' %
             (request.remote_ip,
-             re.escape(
-                 when.strftime('[%d/%b/%Y:%H:%M:%S %z]')), request.method,
-             re.escape(request.uri), request.version, handler.get_status(),
-             handler._reason))
+             re.escape(when.strftime('[%d/%b/%Y:%H:%M:%S %z]')),
+             request.method, re.escape(request.uri), request.version,
+             handler.get_status(), handler._reason))
         message = context.records[0].getMessage()
         match = expected_message.match(message)
         if match is None:
@@ -923,8 +926,7 @@ class AccessLogTests(sprockets.http.testing.SprocketsHttpTestCase):
 class ServerHeaderTests(sprockets.http.testing.SprocketsHttpTestCase):
 
     def get_app(self):
-        self.app = sprockets.http.app.Application(
-            server_header='a/b/c')
+        self.app = sprockets.http.app.Application(server_header='a/b/c')
         return self.app
 
     def test_reads_from_settings(self):
@@ -952,10 +954,8 @@ class ServerHeaderTests(sprockets.http.testing.SprocketsHttpTestCase):
                                              version='myversion')
         self.assertEqual('myservice/myversion', app.settings['server_header'])
 
-        app = sprockets.http.app.Application(service='myservice',
-                                             version=None)
+        app = sprockets.http.app.Application(service='myservice', version=None)
         self.assertEqual('myservice', app.settings['server_header'])
 
-        app = sprockets.http.app.Application(service=None,
-                                             version='myversion')
+        app = sprockets.http.app.Application(service=None, version='myversion')
         self.assertIsNone(app.settings['server_header'])

@@ -6,9 +6,7 @@ version = sprockets.http.__version__
 release = '.'.join(str(v) for v in sprockets.http.version_info[0:2])
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode'
 ]
 
 master_doc = 'index'
