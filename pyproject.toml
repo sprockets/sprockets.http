@@ -70,6 +70,8 @@ dependencies = [
   "flake8>=6,<7",
   "isort>=5.12,<6",
   "pytest>=7.4,<8",
+  "python-docs-theme==2023.5",
+  "sphinx>=7,<8",
   "yapf==0.40.1",
 ]
 features = ["sentry"]
@@ -79,6 +81,7 @@ format = [
   "isort docs sprockets examples.py tests.py",
   "yapf -ir docs sprockets examples.py tests.py",
 ]
+docs = "sphinx-build docs build/sphinx"
 lint = "pre-commit run --all-files"
 test = "pytest tests.py"
 

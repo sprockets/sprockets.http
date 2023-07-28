@@ -5,20 +5,17 @@ copyright = 'AWeber Communications, Inc.'
 version = sprockets.http.__version__
 release = '.'.join(str(v) for v in sprockets.http.version_info[0:2])
 
-extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode'
-]
+extensions = []
+html_theme = 'python_docs_theme'
+html_static_path = ['.']
+html_css_files = ['custom.css']
 
-master_doc = 'index'
-html_theme_options = {
-    'github_user': 'sprockets',
-    'github_repo': 'sprockets.http',
-    'description': 'Tornado application runner',
-    'github_banner': True,
-}
-html_static_path = ['_static']
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+extensions.append('sphinx.ext.autodoc')
 
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/3/', None),
-    'tornado': ('http://tornadoweb.org/en/latest/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'tornado': ('https://www.tornadoweb.org/en/latest/', None),
 }
