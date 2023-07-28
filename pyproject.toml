@@ -43,6 +43,7 @@ sentry = [
 include = [
   "docs",
   "examples.py",
+  ".pre-commit-config.yaml",
   "sprockets/**/*.py",
   "tests.py",
 ]
@@ -78,6 +79,7 @@ format = [
   "isort docs sprockets examples.py tests.py",
   "yapf -ir docs sprockets examples.py tests.py",
 ]
+lint = "pre-commit run --all-files"
 
 [tool.isort]
 force_grid_wrap = 0
