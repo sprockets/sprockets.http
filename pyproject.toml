@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling>=1.5"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sprockets.http"
+version = "3.0.0.dev0"
+readme = "README.rst"
+description = "Tornado HTTP application runner"
+author = [{ name = "AWeber Communications, Inc.", email = "api@aweber.com" }]
+license = "BSD-3-Clause"
+license-files = { paths = ["LICENSE"] }
+requires-python = ">=3.7"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: No Input/Output (Daemon)",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: BSD License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "importlib-metadata; python_version<'3.9'",
+  "tornado>=5,<7",
+]
+
+[project.optional-dependencies]
+sentry = [
+  "sentry-sdk>=1.5.4,<2",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "docs",
+  "examples.py",
+  "sprockets/**/*.py",
+  "tests.py",
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+  "sprockets/**/*.py",
+]
+
+
+[tool.coverage.html]
+directory = "build/coverage"
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.run]
+branch = true
+source = ["sprockets"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage>=7.2,<8",
+  "flake8>=6,<7",
+  "isort>=5.12,<6",
+  "pytest>=7.4,<8",
+  "yapf==0.40.1",
+]
+features = ["sentry"]
+
+[tool.isort]
+force_grid_wrap = 0
+known_local_folder = ["examples", "sprockets.http"]
+multi_line_output = 3
