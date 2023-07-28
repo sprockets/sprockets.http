@@ -44,6 +44,7 @@ include = [
   "docs",
   "examples.py",
   ".pre-commit-config.yaml",
+  ".readthedocs.yaml",
   "sprockets/**/*.py",
   "tests.py",
 ]
