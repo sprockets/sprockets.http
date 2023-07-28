@@ -1,4 +1,3 @@
-from unittest import mock
 import contextlib
 import datetime
 import distutils.dist
@@ -11,14 +10,15 @@ import time
 import unittest
 import uuid
 import warnings
+from unittest import mock
 
 from tornado import concurrent, httpserver, httputil, ioloop, log, testing, web
 
+import examples
 import sprockets.http.app
 import sprockets.http.mixins
 import sprockets.http.runner
 import sprockets.http.testing
-import examples
 
 
 class RecordingHandler(logging.Handler):

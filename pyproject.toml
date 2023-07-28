@@ -75,6 +75,7 @@ features = ["sentry"]
 
 [tool.hatch.envs.default.scripts]
 format = [
+  "isort docs sprockets examples.py tests.py",
   "yapf -ir docs sprockets examples.py tests.py",
 ]
 

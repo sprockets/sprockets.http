@@ -5,11 +5,11 @@ Run a Tornado HTTP service.
 - :class:`.RunCommand`: distutils command to runs an application
 
 """
-from distutils import cmd, errors, log
 import logging
 import os.path
 import signal
 import sys
+from distutils import cmd, errors, log
 
 from tornado import httpserver, ioloop
 
