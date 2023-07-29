@@ -69,6 +69,8 @@ source = ["sprockets"]
 dependencies = [
   "coverage>=7.2,<8",
   "flake8>=6,<7",
+  "flake8-isort>=6.0,<7",
+  "flake8-pyproject>=1.2,<2",
   "isort>=5.12,<6",
   "pytest>=7.4,<8",
   "python-docs-theme==2023.5",

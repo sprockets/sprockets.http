@@ -4,9 +4,9 @@ on:
     branches: ["*"]
     paths-ignore:
       - 'docs/**'
-      - 'setup.*'
-      - '*.md'
       - '*.rst'
+      - '.readthedocs.yaml'
+      - 'LICENSE'
     tags-ignore: ["*"]
   pull_request:
 jobs:
@@ -15,30 +15,36 @@ jobs:
     timeout-minutes: 3
     strategy:
       matrix:
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.9", "3.10", "3.11"]
     container:
       image: python:${{ matrix.python }}-alpine
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install testing dependencies
-        run: pip3 --no-cache-dir install -e '.[sentry]' -r requires/testing.txt
+      - name: Create environment
+        run: |
+          pip install hatch
+          hatch dep show requirements --all >requirements.txt
+          pip install -r requirements.txt
+          pip install .
 
-      - name: Run flake8 tests
-        run: flake8
+      - name: Lint
+        run: |
+          flake8 docs sprockets examples.py tests.py
+          yapf -dr docs sprockets examples.py tests.py
 
-      - name: Run tests
-        run: coverage run
+      - name: Test
+        run: coverage run -m pytest tests.py
 
       - name: Output coverage
         run: coverage report && coverage xml
 
       - name: Upload Coverage
-        uses: codecov/codecov-action@v1.0.2
+        uses: codecov/codecov-action@v3
         if: github.event_name == 'push' && github.repository == 'sprockets/sprockets.http'
         with:
           token: ${{secrets.CODECOV_TOKEN}}
-          file: build/coverage.xml
+          files: coverage.xml
           flags: unittests
           fail_ci_if_error: true
