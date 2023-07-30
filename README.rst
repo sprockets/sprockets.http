@@ -1,7 +1,7 @@
 sprockets.http
 ==============
 
-|Version| |ReadTheDocs| |Travis| |Coverage|
+|Version| |ReadTheDocs| |GitHub| |Coverage|
 
 The goal of this library is to make it a little easier to develop great
 HTTP API services using the Tornado web framework.  It concentrates on
@@ -256,7 +256,8 @@ for choosing the appropriate response format and sending the error response.
    :target: https://codecov.io/github/sprockets/sprockets.http
 .. |ReadTheDocs| image:: http://readthedocs.org/projects/sprocketshttp/badge/?version=master
    :target: https://sprocketshttp.readthedocs.io/
-.. |Travis| image:: https://travis-ci.org/sprockets/sprockets.http.svg
-   :target: https://travis-ci.org/sprockets/sprockets.http
+.. |GitHub| image:: https://img.shields.io/github/actions/workflow/status/sprockets/sprockets.http/testing.yaml
+   :alt: GitHub Workflow Status (with event)
+   :target: https://github.com/sprockets/sprockets.http/actions/workflows/testing.yaml
 .. |Version| image:: https://badge.fury.io/py/sprockets.http.svg
    :target: https://pypi.python.org/pypi/sprockets.http/
