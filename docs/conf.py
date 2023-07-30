@@ -19,3 +19,11 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'tornado': ('https://www.tornadoweb.org/en/latest/', None),
 }
+
+# https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
+extensions.append('sphinx.ext.extlinks')
+extlinks = {
+    'compare':
+    ("https://github.com/sprockets/sprockets.http/compare/%s", "%s"),
+    'issue': ("https://github.com/sprockets/sprockets.http/issues/%s", "#%s"),
+}
