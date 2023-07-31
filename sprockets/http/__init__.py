@@ -5,6 +5,11 @@ import sys
 import warnings
 
 try:
+    from importlib import metadata
+except ImportError:  # pragma: no cover
+    import importlib_metadata as metadata
+
+try:
     import sentry_sdk
     import sentry_sdk.integrations.logging
     import sentry_sdk.integrations.tornado
@@ -17,9 +22,10 @@ try:
 except ModuleNotFoundError:
     pass
 
-
-version_info = (2, 5, 0)
-__version__ = '.'.join(str(v) for v in version_info)
+version = metadata.version('sprockets-http')
+version_info: list = [int(c) for c in version.split('.')[:3]]
+version_info.extend(version.split('.')[3:])
+__version__ = version
 
 _unspecified = object()
 
@@ -75,8 +81,9 @@ def run(create_application, settings=None, log_config=_unspecified):
     from . import runner
 
     app_settings = {} if settings is None else settings.copy()
-    debug_mode = bool(app_settings.get('debug',
-                                       int(os.environ.get('DEBUG', 0)) != 0))
+    debug_mode = bool(
+        app_settings.get('debug',
+                         int(os.environ.get('DEBUG', 0)) != 0))
     app_settings['debug'] = debug_mode
     if log_config is _unspecified:
         warnings.warn(

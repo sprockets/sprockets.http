@@ -5,11 +5,11 @@ Run a Tornado HTTP service.
 - :class:`.RunCommand`: distutils command to runs an application
 
 """
-from distutils import cmd, errors, log
 import logging
 import os.path
 import signal
 import sys
+from distutils import cmd, errors, log
 
 from tornado import httpserver, ioloop
 
@@ -79,8 +79,8 @@ class Runner:
         signal.signal(signal.SIGINT, self._on_signal)
         xheaders = self.application.settings.get('xheaders', True)
         max_body_size = self.application.settings.get('max_body_size', None)
-        max_buffer_size = self.application.settings.get('max_buffer_size',
-                                                        None)
+        max_buffer_size = self.application.settings.get(
+            'max_buffer_size', None)
 
         self.server = httpserver.HTTPServer(
             self.application.tornado_application,
@@ -159,8 +159,7 @@ class RunCommand(cmd.Command):
 
     description = 'Run a sprockets.http application.'
     user_options = [
-        ('application=', 'a',
-         'application callable in `pkg.mod:func` syntax'),
+        ('application=', 'a', 'application callable in `pkg.mod:func` syntax'),
         ('env-file=', 'e', 'environment file to import'),
         ('port=', 'p', 'port for the application to listen on'),
     ]
@@ -175,8 +174,7 @@ class RunCommand(cmd.Command):
             raise errors.DistutilsArgError('application is required')
         if self.env_file and not os.path.exists(self.env_file):
             raise errors.DistutilsArgError(
-                'environment file "{}" does not exist'.format(
-                    self.env_file))
+                'environment file "{}" does not exist'.format(self.env_file))
 
     def run(self):
         self._read_environment()
@@ -204,8 +202,8 @@ class RunCommand(cmd.Command):
 
                 name, sep, value = line.strip().partition('=')
                 if sep == '=':
-                    if (value.startswith(('"', "'")) and
-                            value.endswith(value[0])):
+                    if (value.startswith(('"', "'"))
+                            and value.endswith(value[0])):
                         value = value[1:-1]
                     if value:
                         log.info('setting environment %s=%s', name, value)

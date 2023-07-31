@@ -1,0 +1,2 @@
+python-docs-theme==2023.5
+sphinx>=7,<8

@@ -1,3 +1,0 @@
--e '.[sentry]'
--r testing.txt
--r docs.txt
