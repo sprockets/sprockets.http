@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Add explicit dependency on setuptools package since we use it at runtime
+
 `2.5.0`_ (26 May 2022)
 ----------------------
 - Add customization of **Server** header
