@@ -532,7 +532,7 @@ class RunnerTests(MockHelper, unittest.TestCase):
         self.assertEqual(len(captured), 0)
 
 
-class AsyncRunTests(unittest.TestCase):
+class AsyncRunTests(unittest.IsolatedAsyncioTestCase):
 
     def test_that_on_start_callbacks_are_invoked(self):
         future = concurrent.Future()
