@@ -3,8 +3,8 @@
 Release History
 ===============
 
-`Next Release`_
----------------
+`2.5.1`_ (24 Jul 2025)
+----------------------
 - Add explicit dependency on setuptools package since we use it at runtime
 - Remove support for Python < 3.9. The library will continue to work but we
   are no longer testing older versions.
@@ -186,4 +186,5 @@ Release History
 .. _2.3.0: https://github.com/sprockets/sprockets.http/compare/2.2.0...2.3.0
 .. _2.4.0: https://github.com/sprockets/sprockets.http/compare/2.3.0...2.4.0
 .. _2.5.0: https://github.com/sprockets/sprockets.http/compare/2.4.0...2.5.0
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.5.0...master
+.. _2.5.1: https://github.com/sprockets/sprockets.http/compare/2.5.0...2.5.1
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.5.1...master
