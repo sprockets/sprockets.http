@@ -3,6 +3,12 @@
 Release History
 ===============
 
+`Next Release`_
+---------------
+- Add explicit dependency on setuptools package since we use it at runtime
+- Remove support for Python < 3.9. The library will continue to work but we
+  are no longer testing older versions.
+
 `2.5.0`_ (26 May 2022)
 ----------------------
 - Add customization of **Server** header
