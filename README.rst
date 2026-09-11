@@ -1,7 +1,7 @@
 sprockets.http
 ==============
 
-|Version| |ReadTheDocs| |GitHub| |Coverage|
+|Version| |ReadTheDocs| |GitHub|
 
 The goal of this library is to make it a little easier to develop great
 HTTP API services using the Tornado web framework.  It concentrates on
@@ -218,8 +218,6 @@ If the ``sprockets.mixins.mediatype.ContentMixin`` is also extended by your
 base class, ``write-error`` will use the ``ContentMixin.send_response`` method
 for choosing the appropriate response format and sending the error response.
 
-.. |Coverage| image:: https://codecov.io/github/sprockets/sprockets.http/coverage.svg?branch=master
-   :target: https://codecov.io/github/sprockets/sprockets.http
 .. |ReadTheDocs| image:: http://readthedocs.org/projects/sprocketshttp/badge/?version=master
    :target: https://sprocketshttp.readthedocs.io/
 .. |GitHub| image:: https://img.shields.io/github/actions/workflow/status/sprockets/sprockets.http/testing.yaml

@@ -39,12 +39,3 @@ jobs:
 
       - name: Output coverage
         run: coverage report && coverage xml
-
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v3
-        if: github.event_name == 'push' && github.repository == 'sprockets/sprockets.http'
-        with:
-          token: ${{secrets.CODECOV_TOKEN}}
-          files: coverage.xml
-          flags: unittests
-          fail_ci_if_error: true
