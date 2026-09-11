@@ -1,7 +1,7 @@
 sprockets.http
 ==============
 
-|Version| |ReadTheDocs| |Travis| |Coverage|
+|Version| |ReadTheDocs| |GitHub| |Coverage|
 
 The goal of this library is to make it a little easier to develop great
 HTTP API services using the Tornado web framework.  It concentrates on
@@ -75,41 +75,7 @@ class instead of writing a ``make_app`` function:
 This approach is handy if you have application level state and logic that
 needs to be bundled together.
 
-From setup.py
-~~~~~~~~~~~~~
-If you want, you can even run your application directly from ``setup.py``::
-
-   $ ./setup.py httprun -a mymodule:make_app
-
-The ``httprun`` command is installed as a ``distutils.command`` when you
-install the ``sprockets.http`` package.  This command accepts the following
-command line parameters:
-
-:application:
-   The "callable" that returns your application.  You want to specify
-   whatever you are passing to ``sprockets.http.run()`` using a syntax
-   similar to a `setuptools console script`_.  Basically, this is a string
-   that contains the module name to import and the callable to invoke
-   separated by a colon (e.g., ``mypackage.module.submodule:function``).
-   **This is the only required parameter.**
-
-:env-file:
-   Optional name of a file containing environment variable definitions
-   to parse and load into the environment before running the application.
-   The file is a list of environment variables formatted as ``name=value``
-   with one setting on each line.  If the line starts with ``export``, then
-   the export portion is removed (for the sake of convenience).  If the
-   ``value`` portion is omitted, then the environment variable named will
-   be removed from the environment if it is present.
-
-:port:
-   Optional port number to bind the application to.  This will set the
-   ``PORT`` environment variable *before* running the application and
-   *after* the environment file is read.
-
 .. _logging: https://docs.python.org/3/library/logging.html#module-logging
-.. _setuptools console script: http://python-packaging.readthedocs.io/en/
-   latest/command-line-scripts.html#the-console-scripts-entry-point
 
 Error Logging
 -------------
@@ -256,7 +222,8 @@ for choosing the appropriate response format and sending the error response.
    :target: https://codecov.io/github/sprockets/sprockets.http
 .. |ReadTheDocs| image:: http://readthedocs.org/projects/sprocketshttp/badge/?version=master
    :target: https://sprocketshttp.readthedocs.io/
-.. |Travis| image:: https://travis-ci.org/sprockets/sprockets.http.svg
-   :target: https://travis-ci.org/sprockets/sprockets.http
+.. |GitHub| image:: https://img.shields.io/github/actions/workflow/status/sprockets/sprockets.http/testing.yaml
+   :alt: GitHub Workflow Status (with event)
+   :target: https://github.com/sprockets/sprockets.http/actions/workflows/testing.yaml
 .. |Version| image:: https://badge.fury.io/py/sprockets.http.svg
    :target: https://pypi.python.org/pypi/sprockets.http/

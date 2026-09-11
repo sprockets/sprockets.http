@@ -105,7 +105,8 @@ class CallbackManager:
                 callback(self.tornado_application, io_loop)
             except Exception:
                 self.logger.error('before_run callback %r cancelled start',
-                                  callback, exc_info=1)
+                                  callback,
+                                  exc_info=1)
                 self.stop(io_loop)
                 raise
 
@@ -142,9 +143,12 @@ class CallbackManager:
                     shutdown.add_future(maybe_future)
                     running_async = True
             except Exception as error:
-                self.logger.warning('exception raised from shutdown '
-                                    'callback %r, ignored: %s',
-                                    callback, error, exc_info=1)
+                self.logger.warning(
+                    'exception raised from shutdown '
+                    'callback %r, ignored: %s',
+                    callback,
+                    error,
+                    exc_info=1)
 
         if not running_async:
             shutdown.on_shutdown_ready()
@@ -232,6 +236,7 @@ class Application(CallbackManager, web.Application):
 
         # use a closure to `self.settings` to allow for dynamic configuration
         class ServerHeaderTransform(web.OutputTransform):
+
             def transform_first_chunk(_, status_code, headers, chunk,
                                       finishing):
                 value = self.settings.get('server_header')
@@ -305,9 +310,9 @@ class _ApplicationAdapter(CallbackManager):
     def __init__(self, application):
         self._application = application
         self.settings = self._application.settings
-        super().__init__(
-            self._application,
-            runner_callbacks=getattr(application, 'runner_callbacks', {}))
+        super().__init__(self._application,
+                         runner_callbacks=getattr(application,
+                                                  'runner_callbacks', {}))
         setattr(self._application, 'runner_callbacks', self.runner_callbacks)
 
 
@@ -333,11 +338,10 @@ def wrap_application(application, before_run, on_start, shutdown):
     shutdown = [] if shutdown is None else shutdown
 
     if not isinstance(application, Application):
-        warnings.warn(
-            'sprockets.http.run is only going to accept '
-            'sprockets.app.Application instances in 3.0, '
-            'was called with {}'.format(type(application).__name__),
-            category=DeprecationWarning)
+        warnings.warn('sprockets.http.run is only going to accept '
+                      'sprockets.app.Application instances in 3.0, '
+                      'was called with {}'.format(type(application).__name__),
+                      category=DeprecationWarning)
         application = _ApplicationAdapter(application)
 
     application.before_run_callbacks.extend(before_run)

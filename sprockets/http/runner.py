@@ -2,12 +2,9 @@
 Run a Tornado HTTP service.
 
 - :class:`.Runner`: encapsulates the running of the application
-- :class:`.RunCommand`: distutils command to runs an application
 
 """
-from distutils import cmd, errors, log
 import logging
-import os.path
 import signal
 import sys
 
@@ -79,8 +76,8 @@ class Runner:
         signal.signal(signal.SIGINT, self._on_signal)
         xheaders = self.application.settings.get('xheaders', True)
         max_body_size = self.application.settings.get('max_body_size', None)
-        max_buffer_size = self.application.settings.get('max_buffer_size',
-                                                        None)
+        max_buffer_size = self.application.settings.get(
+            'max_buffer_size', None)
 
         self.server = httpserver.HTTPServer(
             self.application.tornado_application,
@@ -146,80 +143,3 @@ class Runner:
         # Start the application shutdown process
         self.application.stop(ioloop.IOLoop.instance(), self.shutdown_limit,
                               self.wait_timeout)
-
-
-class RunCommand(cmd.Command):
-    """
-    Simple distutils.Command that calls :func:`sprockets.http.run`
-
-    This is installed as the httprun distutils command when you
-    install the ``sprockets.http`` module.
-
-    """
-
-    description = 'Run a sprockets.http application.'
-    user_options = [
-        ('application=', 'a',
-         'application callable in `pkg.mod:func` syntax'),
-        ('env-file=', 'e', 'environment file to import'),
-        ('port=', 'p', 'port for the application to listen on'),
-    ]
-
-    def initialize_options(self):
-        self.application = None
-        self.env_file = None
-        self.port = None
-
-    def finalize_options(self):
-        if not self.application:
-            raise errors.DistutilsArgError('application is required')
-        if self.env_file and not os.path.exists(self.env_file):
-            raise errors.DistutilsArgError(
-                'environment file "{}" does not exist'.format(
-                    self.env_file))
-
-    def run(self):
-        self._read_environment()
-        if self.port:
-            log.info('overriding port to %s', self.port)
-            os.environ['PORT'] = self.port
-        app_factory = self._find_callable()
-        if self.dry_run:
-            log.info('would run %r', app_factory)
-        else:
-            log.info('running %r', app_factory)
-            sprockets.http.run(app_factory)
-
-    def _read_environment(self):
-        if not self.env_file:
-            return
-
-        with open(self.env_file) as env_file:
-            for line in env_file.readlines():
-                orig_line = line.strip()
-                if '#' in line:
-                    line = line[:line.index('#')]
-                if line.startswith('export '):
-                    line = line[7:]
-
-                name, sep, value = line.strip().partition('=')
-                if sep == '=':
-                    if (value.startswith(('"', "'")) and
-                            value.endswith(value[0])):
-                        value = value[1:-1]
-                    if value:
-                        log.info('setting environment %s=%s', name, value)
-                        os.environ[name] = value
-                    else:
-                        log.info('removing %s from environment', name)
-                        os.environ.pop(name, None)
-                elif line:
-                    log.info('malformed environment line %r ignored',
-                             orig_line)
-
-    def _find_callable(self):
-        app_module, callable_name = self.application.split(':')
-        mod = __import__(app_module)
-        for next_mod in app_module.split('.')[1:]:
-            mod = getattr(mod, next_mod)
-        return getattr(mod, callable_name)

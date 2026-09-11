@@ -1,7 +1,7 @@
 from tornado import web
 
-from sprockets.http import app, mixins
 import sprockets.http
+from sprockets.http import app, mixins
 
 
 class StatusHandler(mixins.ErrorLogger, mixins.ErrorWriter,

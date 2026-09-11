@@ -6,8 +6,8 @@ HTTP related utility mixins.
 - :class:`ErrorWriter`: implements ``send_error`` to write a useful response
 
 """
-import logging
 import json
+import logging
 import traceback
 
 from tornado import httputil
